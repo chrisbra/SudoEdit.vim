@@ -1,4 +1,4 @@
-*SudoEdit.txt*	Edit Files using Sudo/su - Vers 0.4		Jul 08, 2009
+*SudoEdit.txt*	Edit Files using Sudo/su - Vers 0.5		Jul 08, 2009
 
 Author:  Christian Brabandt <cb@256bit.org>
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
@@ -18,11 +18,11 @@ Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
 	4.  SudoEdit History..............................: |SudoEdit-history|
 
 ==============================================================================
-2. SudoEdit Manual						*SudoEdit-manual*
+2. SudoEdit Manual					*SudoEdit-manual*
 
 Functionality
 
-This plugin enable vim to read files, using sudo or su or any other tool that
+This plugin enables vim to read files, using sudo or su or any other tool that
 can be used for changing the authentication of a user. Therefore it needs any
 of sudo or su installed and usable by the user. This means, you have to know
 the credentials to authenticate yourself as somebody else.
@@ -106,6 +106,7 @@ For su, you would use g:sudoAuthArg="-c", but you do not have to set it, the
 plugin will automatically use -c if it detects, that su is used.
 ==============================================================================
 4. SudoEdit History					    *SudoEdit-history*
+	0.5: July 08, 2009	: Enables the plugin for |GetLatestVimScripts|
 	0.4: July 08, 2009	: First release
 				  Added Documentation
 	0.3: July 07, 2009	: Internal version, added su support
