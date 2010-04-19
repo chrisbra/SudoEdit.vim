@@ -6,7 +6,7 @@ PLUGIN=SudoEdit
 all: $(PLUGIN) $(PLUGIN).vba
 
 clean:
-	rm -rf *.vba */*.orig *.~* .VimballRecord 
+	rm -rf *.vba */*.orig *.~* .VimballRecord doc/tags
 
 dist-clean: clean
 

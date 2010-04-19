@@ -1,6 +1,7 @@
-*SudoEdit.txt*	Edit Files using Sudo/su - Vers 0.7		Oct 26, 2009
+*SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
+Version: Vers 0.8 Tue, 20 Apr 2010 00:04:14 +0200
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -146,6 +147,8 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.8: Apr  20, 2010      : Made plugin autoloadable
+	                          so the code is only loaded, when necessary
 	0.7: Oct  26, 2009	: Support for reading/writing using sudo:
 	                          protocol handler
 				  Added Debugging capabilities
