@@ -1,4 +1,4 @@
-*SudoEdit.txt*	Edit Files using Sudo/su - Vers 0.6		Jul 14, 2009
+*SudoEdit.txt*	Edit Files using Sudo/su - Vers 0.7		Oct 26, 2009
 
 Author:  Christian Brabandt <cb@256bit.org>
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
@@ -15,7 +15,9 @@ Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
 	2.1 SudoEdit: SudoRead............................: |SudoRead|
 	2.2 SudoEdit: SudoWrite...........................: |SudoWrite|
 	3.  SudoEdit Configuration........................: |SudoEdit-config|
-	4.  SudoEdit History..............................: |SudoEdit-history|
+        4.  SudoEdit Debugging............................: |SudoEdit-debug|
+        5.  SudoEdit F.A.Q................................: |SudoEdit-faq|
+	6.  SudoEdit History..............................: |SudoEdit-history|
 
 ==============================================================================
 2. SudoEdit Manual					*SudoEdit-manual*
@@ -55,6 +57,11 @@ If the current buffer does not contain any file, it will abort.
 SudoRead provides file completion, so you can use <Tab> on the commandline to
 specify the file to read.
 
+For compatibility with the old sudo.vim Plugin, SudoEdit.vim also supports
+reading and writing using the protocol sudo: So instead of using :SudoRead
+/etc/fstab you can also use :e sudo:/etc/fstab (which does not provide
+filename completion)
+
 ==============================================================================
 2.2 SudoWrite							 *SudoWrite*
 
@@ -70,6 +77,8 @@ If the current buffer does not contain any file, it will abort.
 
 You can specify a range to write just like |:w|. If no range is given, it will
 write the whole file.
+
+Again, you can use the protocol handler sudo: for writing.
 
 ==============================================================================
 3. SudoEdit Configuration				*SudoEdit-config* 
@@ -104,8 +113,42 @@ let g:sudoAuthArg="root@localhost"
 
 For su, you would use g:sudoAuthArg="-c", but you do not have to set it, the
 plugin will automatically use -c if it detects, that su is used.
+
 ==============================================================================
-4. SudoEdit History					    *SudoEdit-history*
+4. SudoEdit Debugging					    *SudoEdit-debug*
+
+You can debug this plugin and the shell code that will be executed by
+setting:
+let g:sudoDebug=1
+This ensures, that debug messages will be appended to the |message-history|.
+
+
+==============================================================================
+5. SudoEdit F.A.Q.					    *SudoEdit-faq*
+
+1) This plugin isn't working, while executing the same commands on the
+   shell works fine using sudo.
+
+Make sure, that requiretty is not set. If it is set, you won't be able to use
+sudo from within vim.
+
+2) The plugin is still not working!
+
+Write me an email (look in the first line for my mail address), append the
+debug messages and tell me what exactly is not working. I will look into it
+and if there is a bug fix this plugin.
+
+3) Great work!
+
+Write me an email (look in the first line for my mail address). And if you are
+really happy, vote for the plugin and consider looking at my Amazon whishlist:
+http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
+
+==============================================================================
+6. SudoEdit History					    *SudoEdit-history*
+	0.7: Oct  26, 2009	: Support for reading/writing using sudo:
+	                          protocol handler
+				  Added Debugging capabilities
 	0.6: July 14, 2009	: Fix minor bug, that prevents setting the 
 				  filename correctly when writing.
 	0.5: July 08, 2009	: Enables the plugin for |GetLatestVimScripts|

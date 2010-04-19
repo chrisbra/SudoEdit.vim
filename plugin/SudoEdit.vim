@@ -1,11 +1,11 @@
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.6
+" Version:  0.7
 " Authors:  Christian Brabandt <cb@256bit.org>
 " Last Change: 2009/07/08
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 4 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 5 :AutoInstall: SudoEdit.vim
 
 " Configuration:"{{{
 " Exit quickly when:
@@ -20,7 +20,7 @@ if v:version < 700 || ( v:version == 700 && !has("patch111"))
   finish
 endif
 
-let loaded_sudowrite=0.6
+let loaded_sudowrite=0.7
 
 " Which Tool for super-user access to use"{{{
 " Will be tried in order, first tool that is found will be used
@@ -88,14 +88,28 @@ if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
 endif
 call add(s:AuthTool, s:sudoAuthArg . " ")
 
+fu! <SID>echoWarn(mess)
+    echohl WarningMsg
+    echomsg a:mess
+    echohl Normal
+endfu
+
 fu! <SID>SudoRead(file)
     %d
 "    let cmd=':0r !' . join(s:AuthTool, ' ') . ' cat ' . a:file . ' 2>/dev/null '
-    let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
+    if !exists("g:sudoDebug")
+	let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
+    else
+	let cmd='cat ' . shellescape(a:file,1) 
+    endif
+    "let cmd='cat ' . shellescape(a:file,1) 
     if  s:AuthTool[0] =~ '^su$'
         let cmd='"' . cmd . '" --'
     endif
     let cmd=':0r! ' . join(s:AuthTool, ' ') . cmd
+    if exists("g:sudoDebug") && g:sudoDebug
+	call <SID>echoWarn(cmd)
+    endif
     silent! exe cmd
     $d 
     exe ":f " . a:file
@@ -113,8 +127,14 @@ fu! <SID>SudoWrite(file) range
 	let cmd='tee >/dev/null ' . a:file
 	let cmd=a:firstline . ',' . a:lastline . 'w !' . join(s:AuthTool, ' ') . cmd
     endif
+    if exists("g:sudoDebug") && g:sudoDebug
+	call <SID>echoWarn(cmd)
+    endif
     silent exe cmd
     if v:shell_error
+	if exists("g:sudoDebug") && g:sudoDebug
+	    call <SID>echoWarn(v:shell_error)
+	endif
 	throw "writeError"
     endif
     exe ":f " . a:file
@@ -131,7 +151,8 @@ endfu
 
 fu! <SID>SudoDo(readflag, file) range
     call <SID>LocalSettings(1)
-    let file = !empty(a:file) ? a:file : expand("%")
+"    let file = substitute(a:file, '^sudo:', '', '')
+    let file = !empty(a:file) ? substitute(a:file, '^sudo:', '', '') : expand("%")
     if empty(file)
 	throw "emptyfile"
     endif
@@ -161,9 +182,15 @@ fu! <SID>SudoDo(readflag, file) range
 endfu
 "}}}"}}}
 
-" Define User-Commands"{{{
+" Define User-Commands and Autocommand "{{{
 com! -complete=file -range=% -nargs=? SudoWrite :<line1>,<line2>call <SID>SudoDo(0, <q-args>)
 com! -complete=file -nargs=? SudoRead  :call <SID>SudoDo(1, <q-args>)
+
+augroup Sudo
+	autocmd!
+	au BufReadCmd,FileReadCmd sudo:/*,sudo:* SudoRead <afile>
+	au BufWriteCmd,FileWriteCmd sudo:/*,sudo:* SudoWrite <afile>
+augroup END
 "}}}
 
 
