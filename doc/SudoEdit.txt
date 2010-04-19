@@ -1,4 +1,4 @@
-*SudoEdit.txt*	Edit Files using Sudo/su - Vers 0.5		Jul 08, 2009
+*SudoEdit.txt*	Edit Files using Sudo/su - Vers 0.6		Jul 14, 2009
 
 Author:  Christian Brabandt <cb@256bit.org>
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
@@ -106,6 +106,8 @@ For su, you would use g:sudoAuthArg="-c", but you do not have to set it, the
 plugin will automatically use -c if it detects, that su is used.
 ==============================================================================
 4. SudoEdit History					    *SudoEdit-history*
+	0.6: July 14, 2009	: Fix minor bug, that prevents setting the 
+				  filename correctly when writing.
 	0.5: July 08, 2009	: Enables the plugin for |GetLatestVimScripts|
 	0.4: July 08, 2009	: First release
 				  Added Documentation
