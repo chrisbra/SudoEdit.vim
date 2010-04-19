@@ -1,0 +1,11 @@
+SudoEdit	SudoEdit.txt	/*SudoEdit*
+SudoEdit-config	SudoEdit.txt	/*SudoEdit-config*
+SudoEdit-contents	SudoEdit.txt	/*SudoEdit-contents*
+SudoEdit-copyright	SudoEdit.txt	/*SudoEdit-copyright*
+SudoEdit-history	SudoEdit.txt	/*SudoEdit-history*
+SudoEdit-manual	SudoEdit.txt	/*SudoEdit-manual*
+SudoEdit.txt	SudoEdit.txt	/*SudoEdit.txt*
+SudoRead	SudoEdit.txt	/*SudoRead*
+SudoWrite	SudoEdit.txt	/*SudoWrite*
+g:sudoAuth	SudoEdit.txt	/*g:sudoAuth*
+g:sudoAuthArg	SudoEdit.txt	/*g:sudoAuthArg*
