@@ -2,10 +2,10 @@
 " ---------------------------------------------------------------
 " Version:  0.5
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: 2009/07/07
+" Last Change: 2009/07/08
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 2 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 3 :AutoInstall: SudoEdit.vim
 
 " Configuration:"{{{
 " Exit quickly when:
