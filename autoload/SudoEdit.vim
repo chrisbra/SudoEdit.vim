@@ -60,6 +60,10 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 	" Force reading in the buffer
 	" to avoid stuipd W13 warning
 	sil e! %
+	" Make sure, persistent undo information is written
+	if has("persistent_undo")
+	    exe "wundo" undofile(@%)
+	endif
     endif
 endfu
 
