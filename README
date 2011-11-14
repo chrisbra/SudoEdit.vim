@@ -1,31 +1,14 @@
-SudoEdit.vim - Edit Files using sudo or su or any other tool
+*SudoEdit.txt*	Edit Files using Sudo/su
 
-I) Directory layout 
-=====================
-This repository contains the Join.vim plugin, the unit tests and the 
-documentation. The current directory structure looks like this:
+Author:  Christian Brabandt <cb@256bit.org>
+Version: Vers 0.2 Mon, 14 Nov 2011 21:33:09 +0100
+Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
+           The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
+           (see |copyright|) except use SudoEdit instead of "Vim".
+	   NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK.
 
-doc/
-plugin/
-autoload/
-Makefile
-README
 
-The subdirectory doc/ contains the documentation for the plugin.
-The subdirectory plugin/ contains the Vim plugin and the autoloaded
-file is located below autoload/
-
-II) Installation
-===============
-This plugin comes as vimball, which makes it really easy to install it
-into the right place. 
-1) Edit SudoEdit.vba with your vim (:e SudoEdit.vba) 
-2) From within vim, simply source the file (using :so %)
-3) Restart vim to autoload the plugin and the documentation (:q)
-4) Read the help at :h SudoEdit.txt 
-
-III) Documentation
-==================
+==============================================================================
 1. Contents				*SudoEdit* *SudoEdit-contents*
 
 	1.  Contents......................................: |SudoEdit-contents|
@@ -164,21 +147,37 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
-	0.7: Oct  26, 2009	: Support for reading/writing using sudo:
-	                          protocol handler
-				  Added Debugging capabilities
-	0.6: July 14, 2009	: Fix minor bug, that prevents setting the 
-				  filename correctly when writing.
-	0.5: July 08, 2009	: Enables the plugin for |GetLatestVimScripts|
-	0.4: July 08, 2009	: First release
-				  Added Documentation
-	0.3: July 07, 2009	: Internal version, added su support
-				  Added configuration variables
-	0.2: July 07, 2009	: Internal version, Working sudo support
-				  Created plugin
-	0.1: July 07, 2009	: Internal version, First working version, 
-				  using simple commands
+	0.9: (unreleased) "{{{1
+	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/1
+	     (exception "emptyfile" not caught, reported by Daniel Hahler,
+	     thanks!)
+	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/2
+	     (Avoid W13 error, reported by Daniel Hahler, thanks!)
+	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/3
+	     (Write undofiles, reported by Daniel Hahler, thanks!)
+	0.8: Apr  20, 2010 "{{{1
+	    - Made plugin autoloadable so the code is only loaded,
+	      when necessary
+	0.7: Oct  26, 2009 "{{{1
+	    - Support for reading/writing using sudo: protocol handler
+	    - Added Debugging capabilities
+	0.6: July 14, 2009 "{{{1
+	    - Fix minor bug, that prevents setting the filename correctly
+	      when writing.
+	0.5: July 08, 2009 "{{{1
+	    - Enables the plugin for |GetLatestVimScripts|
+	0.4: July 08, 2009 "{{{1
+	    - First release
+	    - Added Documentation
+	0.3: July 07, 2009 "{{{1
+	    - Internal version, added su support
+	    - Added configuration variables
+	0.2: July 07, 2009 "{{{1
+	    - Internal version, Working sudo support
+	    - Created plugin
+	0.1: July 07, 2009 "{{{1
+	    - Internal version, First working version, using simple commands
 
 ==============================================================================
-Modeline:
-vim:tw=78:ts=8:ft=help
+Modeline: "{{{1
+vim:tw=78:ts=8:ft=help:fdm=marker:fdl=0:norl
