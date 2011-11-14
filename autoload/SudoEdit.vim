@@ -1,24 +1,24 @@
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.8
+" Version:  0.5
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Tue, 20 Apr 2010 00:04:14 +0200
-
-
+" Last Change: Mon, 14 Nov 2011 21:33:09 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 7 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 14 :AutoInstall: SudoEdit.vim
 
-" Which Tool for super-user access to use"{{{
+" Functions: "{{{1
+
+fu! <sid>Init() "{{{2
+" Which Tool for super-user access to use
 " Will be tried in order, first tool that is found will be used
 " (e.g. you could use ssh)
 " You can specify one in your .vimrc using the
 " global variable g:sudoAuth
-let s:sudoAuth=" sudo su "
-if exists("g:sudoAuth")
-    let s:sudoAuth = g:sudoAuth . s:sudoAuth
-endif
-"}}}
+    let s:sudoAuth=" sudo su "
+    if exists("g:sudoAuth")
+	let s:sudoAuth = g:sudoAuth . s:sudoAuth
+    endif
 
 " Specify the parameter to use for the auth tool e.g. su uses "-c", but
 " for su, it will be autodetected, sudo does not need one, for ssh use 
@@ -29,21 +29,30 @@ endif
 "
 " You can specify this parameter in your .vimrc using the
 " global variable g:sudoAuthArg
-if !exists("g:sudoAuthArg")
-    let s:sudoAuthArg=""
-else
-    let s:sudoAuthArg=g:sudoAuthArg
-endif
-"}}}
+    if !exists("g:sudoAuthArg")
+	let s:sudoAuthArg=""
+    else
+	let s:sudoAuthArg=g:sudoAuthArg
+    endif
 
-" Functions:"{{{
+    let s:AuthTool=SudoEdit#CheckAuthTool(split(s:sudoAuth, '\s'))
+    if empty(s:AuthTool)
+	finish
+    endif
 
-fu! SudoEdit#LocalSettings(setflag)
+    if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
+	let s:sudoAuthArg="-c"
+    endif
+    call add(s:AuthTool, s:sudoAuthArg . " ")
+endfu
+
+fu! SudoEdit#LocalSettings(setflag) "{{{2
     if a:setflag
 	" Set shellrediraction temporarily
 	" This is used to get su working right!
 	let s:o_srr=&srr
 	let &srr='>'
+	call <sid>Init()
     else
 	" Reset old settings
 	" shellredirection
@@ -51,7 +60,7 @@ fu! SudoEdit#LocalSettings(setflag)
     endif
 endfu
 
-fu! SudoEdit#CheckAuthTool(Authlist)"{{{
+fu! SudoEdit#CheckAuthTool(Authlist) "{{{2
     for tool in a:Authlist
 	if executable(tool)
 	    return [tool]
@@ -60,33 +69,21 @@ fu! SudoEdit#CheckAuthTool(Authlist)"{{{
     echoerr "No tool found for authentication. Is sudo/su installed and in your $PATH?"
     echoerr "Try setting g:sudoAuth and g:sudoAuthArg"
     return []
-endfu"}}}
+endfu
 
-let s:AuthTool=SudoEdit#CheckAuthTool(split(s:sudoAuth, '\s'))"{{{
-if empty(s:AuthTool)
-    finish
-endif"}}}
-
-if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
-    let s:sudoAuthArg="-c"
-endif
-call add(s:AuthTool, s:sudoAuthArg . " ")
-
-fu! SudoEdit#echoWarn(mess)
+fu! SudoEdit#echoWarn(mess) "{{{2
     echohl WarningMsg
     echomsg a:mess
     echohl Normal
 endfu
 
-fu! SudoEdit#SudoRead(file)
+fu! SudoEdit#SudoRead(file) "{{{2
     %d
-"    let cmd=':0r !' . join(s:AuthTool, ' ') . ' cat ' . a:file . ' 2>/dev/null '
     if !exists("g:sudoDebug")
 	let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
     else
 	let cmd='cat ' . shellescape(a:file,1) 
     endif
-    "let cmd='cat ' . shellescape(a:file,1) 
     if  s:AuthTool[0] =~ '^su$'
         let cmd='"' . cmd . '" --'
     endif
@@ -101,12 +98,12 @@ fu! SudoEdit#SudoRead(file)
     set nomod
 endfu
 
-fu! SudoEdit#SudoWrite(file) range
+fu! SudoEdit#SudoWrite(file) range "{{{2
     if  s:AuthTool[0] =~ '^su$'
 	" Workaround since su cannot be run with :w !
-	    let tmpfile = tempname()
-	    exe a:firstline . ',' . a:lastline . 'w ' . tmpfile
-	    let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . tmpfile . ' ' . a:file . '" --'
+	let tmpfile = tempname()
+	exe a:firstline . ',' . a:lastline . 'w ' . tmpfile
+	let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . tmpfile . ' ' . a:file . '" --'
     else
 	let cmd='tee >/dev/null ' . a:file
 	let cmd=a:firstline . ',' . a:lastline . 'w !' . join(s:AuthTool, ' ') . cmd
@@ -125,7 +122,7 @@ fu! SudoEdit#SudoWrite(file) range
     set nomod
 endfu
 
-fu! SudoEdit#Stats(file)
+fu! SudoEdit#Stats(file) "{{{2
     ":w echoes a string like this by default:
     ""SudoEdit.vim" 108L, 2595C geschrieben
     return '"' . a:file . '" ' . line('$') . 'L, ' . getfsize(expand(a:file)) . 'C written'
@@ -133,12 +130,13 @@ endfu
 
 
 
-fu! SudoEdit#SudoDo(readflag, file) range
+fu! SudoEdit#SudoDo(readflag, file) range "{{{2
     call SudoEdit#LocalSettings(1)
-"    let file = substitute(a:file, '^sudo:', '', '')
     let file = !empty(a:file) ? substitute(a:file, '^sudo:', '', '') : expand("%")
     if empty(file)
-	throw "emptyfile"
+	call SudoEdit#echoWarn("Cannot write file. Please enter filename for writing!")
+	call SudoEdit#LocalSettings(0)
+	return
     endif
     if a:readflag
 	call SudoEdit#SudoRead(file)
@@ -146,8 +144,6 @@ fu! SudoEdit#SudoDo(readflag, file) range
 	try
 	    exe a:firstline . ',' . a:lastline . 'call SudoEdit#SudoWrite(' . shellescape(file,1) . ')'
 	    echo SudoEdit#Stats(file)
-	catch /emptyfile/
-	    echoerr "Cannot write file. Please enter filename for writing!"
 	catch /writeError/
 	    let a=v:errmsg
 	    echoerr "There was an error writing the file!"
@@ -164,7 +160,6 @@ fu! SudoEdit#SudoDo(readflag, file) range
     call SudoEdit#LocalSettings(0)
     redraw!
 endfu
-"}}}"}}}
 
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 :  }}}
