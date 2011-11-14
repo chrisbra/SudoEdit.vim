@@ -2,7 +2,7 @@
 " ---------------------------------------------------------------
 " Version:  0.5
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Mon, 14 Nov 2011 21:33:09 +0100
+" Last Change: Mon, 14 Nov 2011 21:42:47 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
 " GetLatestVimScripts: 2709 14 :AutoInstall: SudoEdit.vim
@@ -50,13 +50,16 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
     if a:setflag
 	" Set shellrediraction temporarily
 	" This is used to get su working right!
-	let s:o_srr=&srr
-	let &srr='>'
+	let s:o_srr = &srr
+	let &srr = '>'
 	call <sid>Init()
     else
 	" Reset old settings
 	" shellredirection
-	let &srr=s:o_srr
+	let &srr = s:o_srr
+	" Force reading in the buffer
+	" to avoid stuipd W13 warning
+	sil e! %
     endif
 endfu
 
@@ -152,13 +155,10 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
 	    call SudoEdit#LocalSettings(0)
 	    redraw!
 	endtry
-	sleep
     endif
     if v:shell_error
 	echoerr "Error " . ( a:readflag ? "reading " : "writing to " )  . file . "! Password wrong?"
     endif
-    call SudoEdit#LocalSettings(0)
-    redraw!
 endfu
 
 " Modeline {{{1
