@@ -1,7 +1,7 @@
 *SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.8 Tue, 20 Apr 2010 00:04:14 +0200
+Version: Vers 0.2 Mon, 14 Nov 2011 21:33:09 +0100
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -147,23 +147,37 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
-	0.8: Apr  20, 2010      : Made plugin autoloadable
-	                          so the code is only loaded, when necessary
-	0.7: Oct  26, 2009	: Support for reading/writing using sudo:
-	                          protocol handler
-				  Added Debugging capabilities
-	0.6: July 14, 2009	: Fix minor bug, that prevents setting the 
-				  filename correctly when writing.
-	0.5: July 08, 2009	: Enables the plugin for |GetLatestVimScripts|
-	0.4: July 08, 2009	: First release
-				  Added Documentation
-	0.3: July 07, 2009	: Internal version, added su support
-				  Added configuration variables
-	0.2: July 07, 2009	: Internal version, Working sudo support
-				  Created plugin
-	0.1: July 07, 2009	: Internal version, First working version, 
-				  using simple commands
+	0.9: (unreleased) "{{{1
+	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/1
+	     (exception "emptyfile" not caught, reported by Daniel Hahler,
+	     thanks!)
+	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/2
+	     (Avoid W13 error, reported by Daniel Hahler, thanks!)
+	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/3
+	     (Write undofiles, reported by Daniel Hahler, thanks!)
+	0.8: Apr  20, 2010 "{{{1
+	    - Made plugin autoloadable so the code is only loaded,
+	      when necessary
+	0.7: Oct  26, 2009 "{{{1
+	    - Support for reading/writing using sudo: protocol handler
+	    - Added Debugging capabilities
+	0.6: July 14, 2009 "{{{1
+	    - Fix minor bug, that prevents setting the filename correctly
+	      when writing.
+	0.5: July 08, 2009 "{{{1
+	    - Enables the plugin for |GetLatestVimScripts|
+	0.4: July 08, 2009 "{{{1
+	    - First release
+	    - Added Documentation
+	0.3: July 07, 2009 "{{{1
+	    - Internal version, added su support
+	    - Added configuration variables
+	0.2: July 07, 2009 "{{{1
+	    - Internal version, Working sudo support
+	    - Created plugin
+	0.1: July 07, 2009 "{{{1
+	    - Internal version, First working version, using simple commands
 
 ==============================================================================
-Modeline:
-vim:tw=78:ts=8:ft=help
+Modeline: "{{{1
+vim:tw=78:ts=8:ft=help:fdm=marker:fdl=0:norl
