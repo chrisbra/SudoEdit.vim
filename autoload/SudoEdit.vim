@@ -58,7 +58,7 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 	" shellredirection
 	let &srr = s:o_srr
 	" Force reading in the buffer
-	" to avoid stuipd W13 warning
+	" to avoid stupid W13 warning
 	sil e! %
 	" Make sure, persistent undo information is written
 	if has("persistent_undo")
