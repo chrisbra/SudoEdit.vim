@@ -147,7 +147,7 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
-	0.9: (unreleased) "{{{1
+	0.9: Nov 18, 2011 "{{{1
 	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/1
 	     (exception "emptyfile" not caught, reported by Daniel Hahler,
 	     thanks!)
