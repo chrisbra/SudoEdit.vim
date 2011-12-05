@@ -62,7 +62,11 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 	sil e! %
 	" Make sure, persistent undo information is written
 	if has("persistent_undo")
-	    exe "wundo" undofile(@%)
+	    try
+		exe "wundo" undofile(escape(@%, '%'))
+	    catch /^Vim\%((\a\+)\)\=:E828/
+		call SudoEdit#echoWarn("Can't write undofile! Check permissions of " . undofile(@%))
+	    endtry
 	endif
     endif
 endfu
@@ -148,6 +152,10 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
     if a:readflag
 	call SudoEdit#SudoRead(file)
     else
+	if !&mod
+	    call SudoEdit#echoWarn("Buffer not modified, not writing")
+	    return
+	endif
 	try
 	    exe a:firstline . ',' . a:lastline . 'call SudoEdit#SudoWrite(' . shellescape(file,1) . ')'
 	    echo SudoEdit#Stats(file)
@@ -157,7 +165,7 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
 	    echoerr a
 	finally
 	    call SudoEdit#LocalSettings(0)
-	    redraw!
+	    "redraw!
 	endtry
     endif
     if v:shell_error
