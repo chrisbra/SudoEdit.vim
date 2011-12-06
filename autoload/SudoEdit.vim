@@ -146,7 +146,6 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
     let file = !empty(a:file) ? substitute(a:file, '^sudo:', '', '') : expand("%")
     if empty(file)
 	call SudoEdit#echoWarn("Cannot write file. Please enter filename for writing!")
-	call SudoEdit#LocalSettings(0)
 	return
     endif
     if a:readflag
