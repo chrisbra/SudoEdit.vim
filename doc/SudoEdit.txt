@@ -147,6 +147,16 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.11: (unreleased) "{{{1
+	    -change owner of undofile to that of the edited super-user file,
+	     so vim will automatically load the undofile when opening that
+	     file the next time (reported by seanfarley and blueyed, thanks!)
+	    -Only set the filename using :f when writing to another file
+	     (https://github.com/chrisbra/SudoEdit.vim/pull/8 by blueyed,
+	     thanks!)
+	    -Don't write undofiles for empty files
+	     (https://github.com/chrisbra/SudoEdit.vim/issues/7 reported by
+	     blueyed, thanks!)
 	0.10: Nov 18, 2011 "{{{1
 	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/1
 	     (exception "emptyfile" not caught, reported by Daniel Hahler,
