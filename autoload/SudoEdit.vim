@@ -63,7 +63,7 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 	" Make sure, persistent undo information is written
 	if has("persistent_undo")
 	    try
-		exe "wundo" undofile(escape(@%, '%'))
+		exe "wundo" escape(undofile(@%), '%')
 	    catch /^Vim\%((\a\+)\)\=:E828/
 		call SudoEdit#echoWarn("Can't write undofile! Check permissions of " . undofile(@%))
 	    endtry
