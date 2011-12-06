@@ -64,6 +64,11 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 	if has("persistent_undo")
 	    try
 		exe "wundo" fnameescape(undofile(@%))
+		if has("unix") || has("macunix")
+		    let perm = system("stat -c '%u:%g' " . fnameescape(@%))[:-2]
+		    let cmd  = join(s:AuthTool, ' '). ' chown '. perm. ' -- '. fnameescape(undofile(@%))
+		    call system(cmd)
+		endif
 	    catch /^Vim\%((\a\+)\)\=:E828/
 		call SudoEdit#echoWarn("Can't write undofile! Check permissions of " . undofile(@%))
 	    endtry
@@ -138,8 +143,6 @@ fu! SudoEdit#Stats(file) "{{{2
     ""SudoEdit.vim" 108L, 2595C geschrieben
     return '"' . a:file . '" ' . line('$') . 'L, ' . getfsize(expand(a:file)) . 'C written'
 endfu
-
-
 
 fu! SudoEdit#SudoDo(readflag, file) range "{{{2
     call SudoEdit#LocalSettings(1)
