@@ -63,16 +63,12 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
 	if has("persistent_undo") && !empty(@%)
-	    try
-		exe "wundo" fnameescape(undofile(@%))
-		if has("unix") || has("macunix")
-		    let perm = system("stat -c '%u:%g' " . fnameescape(@%))[:-2]
-		    let cmd  = join(s:AuthTool, ' '). ' chown '. perm. ' -- '. fnameescape(undofile(@%))
-		    call system(cmd)
-		endif
-	    catch /^Vim\%((\a\+)\)\=:E828/
-		call SudoEdit#echoWarn("Can't write undofile! Check permissions of " . undofile(@%))
-	    endtry
+	    exe "wundo" fnameescape(undofile(@%))
+	    if has("unix") || has("macunix")
+		let perm = system("stat -c '%u:%g' " . fnameescape(@%))[:-2]
+		let cmd  = join(s:AuthTool, ' '). ' chown '. perm. ' -- '. fnameescape(undofile(@%))
+		call system(cmd)
+	    endif
 	endif
     endif
 endfu
