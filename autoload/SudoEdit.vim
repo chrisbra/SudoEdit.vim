@@ -129,8 +129,11 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
 	endif
 	throw "writeError"
     endif
-    exe ":f " . a:file
-    set nomod
+
+    " when writing to another file
+    if a:file != @%
+        exe ":f " . a:file
+    endif
 endfu
 
 fu! SudoEdit#Stats(file) "{{{2
