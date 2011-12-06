@@ -61,7 +61,8 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 	" to avoid stupid W13 warning
 	sil e! %
 	" Make sure, persistent undo information is written
-	if has("persistent_undo")
+	" but only for valid files and not empty ones
+	if has("persistent_undo") && !empty(@%)
 	    try
 		exe "wundo" fnameescape(undofile(@%))
 		if has("unix") || has("macunix")
