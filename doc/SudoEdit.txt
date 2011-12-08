@@ -165,6 +165,16 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 	     (Avoid W13 error, reported by Daniel Hahler, thanks!)
 	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/3
 	     (Write undofiles, reported by Daniel Hahler, thanks!)
+	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/5
+	     and also fix https://github.com/chrisbra/SudoEdit.vim/issues/6
+	     (fix permissions and path of the undofile, partly by Daniel
+	      Hahler, thanks!)
+	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/7
+	     (only reread the file, if it has a name, reported by Daniel
+	      Hahler, thanks!)
+	    -fix https://github.com/chrisbra/SudoEdit.vim/pull/8
+	     (only set the filename when writing to another file, by Daniel
+	      Hahler, thanks!)
 	0.8: Apr  20, 2010 "{{{1
 	    - Made plugin autoloadable so the code is only loaded,
 	      when necessary
