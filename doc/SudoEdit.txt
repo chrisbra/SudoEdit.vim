@@ -150,13 +150,17 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 	0.11: (unreleased) "{{{1
 	    -change owner of undofile to that of the edited super-user file,
 	     so vim will automatically load the undofile when opening that
-	     file the next time (reported by seanfarley and blueyed, thanks!)
+	     file the next time (reported by Sean Farley and blueyed, thanks!)
 	    -Only set the filename using :f when writing to another file
-	     (https://github.com/chrisbra/SudoEdit.vim/pull/8 by blueyed,
-	     thanks!)
-	    -Don't write undofiles for empty files
+	     (https://github.com/chrisbra/SudoEdit.vim/pull/8 and also
+	      https://github.com/chrisbra/SudoEdit.vim/issues/5 patch by
+	      Daniel Hahler, thanks!)
+	     -fix https://github.com/chrisbra/SudoEdit.vim/issues/6
+	     (fix permissions and path of the undofile, partly by Daniel
+	      Hahler, thanks!)
+	    -Don't reread the file and write undofiles for empty files
 	     (https://github.com/chrisbra/SudoEdit.vim/issues/7 reported by
-	     blueyed, thanks!)
+	     Daniel Hahler, thanks!)
 	0.10: Nov 18, 2011 "{{{1
 	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/1
 	     (exception "emptyfile" not caught, reported by Daniel Hahler,
@@ -165,16 +169,6 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 	     (Avoid W13 error, reported by Daniel Hahler, thanks!)
 	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/3
 	     (Write undofiles, reported by Daniel Hahler, thanks!)
-	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/5
-	     and also fix https://github.com/chrisbra/SudoEdit.vim/issues/6
-	     (fix permissions and path of the undofile, partly by Daniel
-	      Hahler, thanks!)
-	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/7
-	     (only reread the file, if it has a name, reported by Daniel
-	      Hahler, thanks!)
-	    -fix https://github.com/chrisbra/SudoEdit.vim/pull/8
-	     (only set the filename when writing to another file, by Daniel
-	      Hahler, thanks!)
 	0.8: Apr  20, 2010 "{{{1
 	    - Made plugin autoloadable so the code is only loaded,
 	      when necessary
