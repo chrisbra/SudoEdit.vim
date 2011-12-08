@@ -57,12 +57,12 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 	" Reset old settings
 	" shellredirection
 	let &srr = s:o_srr
-	" Force reading in the buffer
-	" to avoid stupid W13 warning
-	sil e! %
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
 	if has("persistent_undo") && !empty(@%)
+	    " Force reading in the buffer
+	    " to avoid stupid W13 warning
+	    sil e! %
 	    exe "wundo" fnameescape(undofile(@%))
 	    if has("unix") || has("macunix")
 		let perm = system("stat -c '%u:%g' " . fnameescape(@%))[:-2]
