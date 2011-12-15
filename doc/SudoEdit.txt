@@ -147,7 +147,7 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
-	0.11: (unreleased) "{{{1
+	0.11: Dec 15, 2011 "{{{1
 	    -change owner of undofile to that of the edited super-user file,
 	     so vim will automatically load the undofile when opening that
 	     file the next time (reported by Sean Farley and blueyed, thanks!)
