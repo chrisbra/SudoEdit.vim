@@ -6,6 +6,8 @@ PLUGIN=SudoEdit
 
 all: $(PLUGIN).vmb
 
+version: $(PLUGIN) $(PLUGIN).vmb
+
 clean:
 	rm -rf *.vmb *.vba */*.orig *.~* .VimballRecord doc/tags
 
