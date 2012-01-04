@@ -68,6 +68,9 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 		let perm = system("stat -c '%u:%g' " . fnameescape(@%))[:-2]
 		let cmd  = join(s:AuthTool, ' '). ' chown '. perm. ' -- '. fnameescape(undofile(@%))
 		call system(cmd)
+		" Make sure, undo file is readable for current user
+		let cmd  = join(s:AuthTool, ' '). ' chmod a+r -- '. fnameescape(undofile(@%))
+		call system(cmd)
 	    endif
 	endif
     endif
@@ -107,6 +110,8 @@ fu! SudoEdit#SudoRead(file) "{{{2
     silent! exe cmd
     $d 
     exe ":f " . a:file
+    " Force reading undofile, if one exists
+    exe "sil rundo" escape(undofile(@%), '%')
     filetype detect
     set nomod
 endfu
