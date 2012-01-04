@@ -62,8 +62,8 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 	if has("persistent_undo") && !empty(@%)
 	    " Force reading in the buffer
 	    " to avoid stupid W13 warning
-	    sil e! %
-	    exe "wundo" fnameescape(undofile(@%))
+	    sil call SudoEdit#SudoRead(@%)
+	    exe "wundo!" fnameescape(undofile(@%))
 	    if has("unix") || has("macunix")
 		let perm = system("stat -c '%u:%g' " . fnameescape(@%))[:-2]
 		let cmd  = join(s:AuthTool, ' '). ' chown '. perm. ' -- '. fnameescape(undofile(@%))
