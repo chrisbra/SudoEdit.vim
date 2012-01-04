@@ -59,7 +59,7 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 	let &srr = s:o_srr
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
-	if has("persistent_undo") && !empty(@%)
+	if has("persistent_undo") && !empty(@%) && !<sid>CheckNetrwFile(@%)
 	    " Force reading in the buffer
 	    " to avoid stupid W13 warning
 	    sil call SudoEdit#SudoRead(@%)
@@ -129,7 +129,17 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
     if exists("g:sudoDebug") && g:sudoDebug
 	call SudoEdit#echoWarn(cmd)
     endif
-    silent exe cmd
+    if <sid>CheckNetrwFile(a:file)
+	let protocol = matchstr(a:file, '^[^:]:')
+	call SudoEdit#echoWarn('Using Netrw for writing')
+	let uid = input(protocol . ' username: ')
+	let passwd = inputsecret('password: ')
+	call NetUserPass(uid, passwd)
+	" Write using Netrw
+	w
+    else
+	silent exe cmd
+    endif
     if v:shell_error
 	if exists("g:sudoDebug") && g:sudoDebug
 	    call SudoEdit#echoWarn(v:shell_error)
@@ -181,5 +191,8 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
     endif
 endfu
 
+fu! <sid>CheckNetrwFile(file) "{{{2
+    return a:file =~ '^\%(dav\|fetch\|ftp\|http\|rcp\|rsync\|scp\|sftp\):'
+endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 :  }}}
