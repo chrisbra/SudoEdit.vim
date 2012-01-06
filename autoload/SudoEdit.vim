@@ -111,7 +111,9 @@ fu! SudoEdit#SudoRead(file) "{{{2
     $d 
     exe ":f " . a:file
     " Force reading undofile, if one exists
-    exe "sil rundo" escape(undofile(@%), '%')
+    if glob(undofile(@%))
+	exe "rundo" escape(undofile(@%), '%')
+    endif
     filetype detect
     set nomod
 endfu
