@@ -44,9 +44,11 @@ fu! <sid>Init() "{{{2
 	let s:sudoAuthArg="-c"
     endif
     call add(s:AuthTool, s:sudoAuthArg . " ")
+    " Stack of messages
+    let s:msg=''
 endfu
 
-fu! SudoEdit#LocalSettings(setflag) "{{{2
+fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
     if a:setflag
 	" Set shellrediraction temporarily
 	" This is used to get su working right!
@@ -62,15 +64,18 @@ fu! SudoEdit#LocalSettings(setflag) "{{{2
 	if has("persistent_undo") && !empty(@%) && !<sid>CheckNetrwFile(@%)
 	    " Force reading in the buffer
 	    " to avoid stupid W13 warning
-	    sil call SudoEdit#SudoRead(@%)
-	    exe "wundo!" fnameescape(undofile(@%))
-	    if has("unix") || has("macunix")
-		let perm = system("stat -c '%u:%g' " . fnameescape(@%))[:-2]
-		let cmd  = join(s:AuthTool, ' '). ' chown '. perm. ' -- '. fnameescape(undofile(@%))
-		call system(cmd)
-		" Make sure, undo file is readable for current user
-		let cmd  = join(s:AuthTool, ' '). ' chmod a+r -- '. fnameescape(undofile(@%))
-		call system(cmd)
+	    let file=substitute(expand("%"), '^sudo://', '', '')
+	    if !a:readflag
+		sil call SudoEdit#SudoRead(file)
+		exe "sil wundo!" fnameescape(undofile(file))
+		if has("unix") || has("macunix")
+		    let perm = system("stat -c '%u:%g' " . fnameescape(file))[:-2]
+		    let cmd  = 'sil !' . join(s:AuthTool, ' '). ' sh -c "chown '. perm. ' -- '. fnameescape(undofile(file)) . ' && '
+		    " Make sure, undo file is readable for current user
+		    let cmd  .= ' chmod a+r -- '. fnameescape(undofile(file)). '"'
+		    exe cmd
+		    "call system(cmd)
+		endif
 	    endif
 	endif
     endif
@@ -109,10 +114,9 @@ fu! SudoEdit#SudoRead(file) "{{{2
     endif
     silent! exe cmd
     $d 
-    exe ":f " . a:file
     " Force reading undofile, if one exists
-    if glob(undofile(@%))
-	exe "rundo" escape(undofile(@%), '%')
+    if filereadable(undofile(a:file))
+	exe "sil rundo" escape(undofile(a:file), '%')
     endif
     filetype detect
     set nomod
@@ -149,10 +153,6 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
 	throw "writeError"
     endif
 
-    " when writing to another file
-    if a:file != @%
-        exe ":f " . a:file
-    endif
 endfu
 
 fu! SudoEdit#Stats(file) "{{{2
@@ -162,11 +162,18 @@ fu! SudoEdit#Stats(file) "{{{2
 endfu
 
 fu! SudoEdit#SudoDo(readflag, file) range "{{{2
-    call SudoEdit#LocalSettings(1)
-    let file = !empty(a:file) ? substitute(a:file, '^sudo:', '', '') : expand("%")
+    call SudoEdit#LocalSettings(1, 1)
+    let s:use_sudo_protocol_handler = 0
+    let file = a:file
+    if file =~ '^sudo:'
+	let s:use_sudo_protocol_handler = 1
+	let file = substitute(file, '^sudo://', '', '')
+    endif
+    let file = empty(a:file) ? expand("%") : file
+    "let file = !empty(a:file) ? substitute(a:file, '^sudo:', '', '') : expand("%")
     if empty(file)
 	call SudoEdit#echoWarn("Cannot write file. Please enter filename for writing!")
-	call SudoEdit#LocalSettings(0)
+	call SudoEdit#LocalSettings(0, 1)
 	return
     endif
     if a:readflag
@@ -178,18 +185,26 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
 	endif
 	try
 	    exe a:firstline . ',' . a:lastline . 'call SudoEdit#SudoWrite(' . shellescape(file,1) . ')'
-	    echo SudoEdit#Stats(file)
+	    let s:msg = SudoEdit#Stats(file)
 	catch /writeError/
 	    let a=v:errmsg
 	    echoerr "There was an error writing the file!"
 	    echoerr a
-	finally
-	    call SudoEdit#LocalSettings(0)
-	    "redraw!
 	endtry
     endif
+    call SudoEdit#LocalSettings(0, a:readflag)
+    if file !~ 'sudo://' && s:use_sudo_protocol_handler
+	let file = 'sudo://' . fnamemodify(file, ':p')
+    endif
+    exe ':sil f ' . file
     if v:shell_error
-	echoerr "Error " . ( a:readflag ? "reading " : "writing to " )  . file . "! Password wrong?"
+	echoerr "Error " . ( a:readflag ? "reading " : "writing to " )  .
+		\ file . "! Password wrong?"
+    endif
+    if !empty(s:msg)
+	"redr!
+	echo s:msg
+	let s:msg = ""
     endif
 endfu
 
