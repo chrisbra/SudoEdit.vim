@@ -70,9 +70,11 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 		exe "sil wundo!" fnameescape(undofile(file))
 		if has("unix") || has("macunix")
 		    let perm = system("stat -c '%u:%g' " . fnameescape(file))[:-2]
-		    let cmd  = 'sil !' . join(s:AuthTool, ' '). ' sh -c "chown '. perm. ' -- '. fnameescape(undofile(file)) . ' && '
+		    let cmd  = 'sil !' . join(s:AuthTool, ' '). ' sh -c "chown '.
+				\ perm. ' -- '. fnameescape(undofile(file)) . ' && '
 		    " Make sure, undo file is readable for current user
-		    let cmd  .= ' chmod a+r -- '. fnameescape(undofile(file)). '"'
+		    let cmd  .= ' chmod a+r -- '. fnameescape(undofile(file)).
+				\ '" 2>/dev/null'
 		    exe cmd
 		    "call system(cmd)
 		endif
@@ -152,7 +154,6 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
 	endif
 	throw "writeError"
     endif
-
 endfu
 
 fu! SudoEdit#Stats(file) "{{{2
@@ -206,6 +207,19 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
 	echo s:msg
 	let s:msg = ""
     endif
+endfu
+
+" Not needed
+fu! SudoEdit#SudoWritePrepare(name, line1, line2) "{{{1
+    let s:oldpos = winsaveview()
+    let name=a:name
+    if empty(name)
+	let name='""'
+    endif
+    let cmd = printf("%d,%dcall SudoEdit#SudoDo(0, %s)",
+		\ a:line1, a:line2, name)
+    exe cmd
+    call winrestview(s:oldpos)
 endfu
 
 fu! <sid>CheckNetrwFile(file) "{{{2
