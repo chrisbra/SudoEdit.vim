@@ -210,7 +210,7 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
 endfu
 
 " Not needed
-fu! SudoEdit#SudoWritePrepare(name, line1, line2) "{{{1
+fu! SudoEdit#SudoWritePrepare(name, line1, line2) "{{{2
     let s:oldpos = winsaveview()
     let name=a:name
     if empty(name)
