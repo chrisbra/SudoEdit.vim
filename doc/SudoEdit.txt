@@ -147,6 +147,17 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.12: (unreleased) "{{{1
+	    - Avoid redraw when changing permissions of the undofile
+	    - Don't move cursor on Reading/Writing
+	      (issue https://github.com/chrisbra/SudoEdit.vim/issues/11,
+	      reported by Daniel Hahler, Thanks!)
+	    - Support for calling Netrw with another userid/password
+	      (issue https://github.com/chrisbra/SudoEdit.vim/issues/4,
+	      reported by Daniel Hahler, Thanks!)
+	    - Autocmds for Writing did not fire (issue
+	      https://github.com/chrisbra/SudoEdit.vim/issues/10, reported by
+	      Raghavendra D Prabhu, Thanks!)
 	0.11: Dec 15, 2011 "{{{1
 	    -change owner of undofile to that of the edited super-user file,
 	     so vim will automatically load the undofile when opening that
