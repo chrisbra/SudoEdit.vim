@@ -156,7 +156,7 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 	      (issue https://github.com/chrisbra/SudoEdit.vim/issues/4,
 	      reported by Daniel Hahler, Thanks!)
 	    - Autocmds for Writing did not fire (issue
-	      https://github.com/chrisbra/SudoEdit.vim/issues/10, reported by
+	      https://github.com/chrisbra/SudoEdit.vim/issues/10, partly by
 	      Raghavendra D Prabhu, Thanks!)
 	0.11: Dec 15, 2011 "{{{1
 	    -change owner of undofile to that of the edited super-user file,
