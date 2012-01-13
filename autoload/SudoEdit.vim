@@ -64,7 +64,7 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 	if has("persistent_undo") && !empty(@%) && !<sid>CheckNetrwFile(@%)
 	    " Force reading in the buffer
 	    " to avoid stupid W13 warning
-	    let file=substitute(expand("%"), '^sudo://', '', '')
+	    let file=substitute(expand("%"), '^sudo:', '', '')
 	    if !a:readflag
 		sil call SudoEdit#SudoRead(file)
 		exe "sil wundo!" fnameescape(undofile(file))
@@ -168,7 +168,7 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
     let file = a:file
     if file =~ '^sudo:'
 	let s:use_sudo_protocol_handler = 1
-	let file = substitute(file, '^sudo://', '', '')
+	let file = substitute(file, '^sudo:', '', '')
     endif
     let file = empty(a:file) ? expand("%") : file
     "let file = !empty(a:file) ? substitute(a:file, '^sudo:', '', '') : expand("%")
@@ -194,8 +194,8 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
 	endtry
     endif
     call SudoEdit#LocalSettings(0, a:readflag)
-    if file !~ 'sudo://' && s:use_sudo_protocol_handler
-	let file = 'sudo://' . fnamemodify(file, ':p')
+    if file !~ 'sudo:' && s:use_sudo_protocol_handler
+	let file = 'sudo:' . fnamemodify(file, ':p')
     endif
     exe ':sil f ' . file
     if v:shell_error
