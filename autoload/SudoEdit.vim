@@ -69,11 +69,11 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 		sil call SudoEdit#SudoRead(file)
 		exe "sil wundo!" fnameescape(undofile(file))
 		if has("unix") || has("macunix")
-		    let perm = system("stat -c '%u:%g' " . fnameescape(file))[:-2]
+		    let perm = system("stat -c '%u:%g' " . shellescape(file, 1))[:-2]
 		    let cmd  = 'sil !' . join(s:AuthTool, ' '). ' sh -c "chown '.
-				\ perm. ' -- '. fnameescape(undofile(file)) . ' && '
+				\ perm. ' -- '. shellescape(undofile(file),1) . ' && '
 		    " Make sure, undo file is readable for current user
-		    let cmd  .= ' chmod a+r -- '. fnameescape(undofile(file)).
+		    let cmd  .= ' chmod a+r -- '. shellescape(undofile(file),1).
 				\ '" 2>/dev/null'
 		    exe cmd
 		    "call system(cmd)
