@@ -197,11 +197,15 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
 	let file = 'sudo:' . fnamemodify(file, ':p')
     endif
-    exe ':sil f ' . file
     if v:shell_error
 	echoerr "Error " . ( a:readflag ? "reading " : "writing to " )  .
 		\ file . "! Password wrong?"
     endif
+    " Write successfull
+    if &mod
+	setl nomod
+    endif
+    exe ':sil f ' . file
     if !empty(s:msg)
 	"redr!
 	echo s:msg
