@@ -133,13 +133,25 @@ This ensures, that debug messages will be appended to the |message-history|.
 Make sure, that requiretty is not set. If it is set, you won't be able to use
 sudo from within vim.
 
-2) The plugin is still not working!
+2) Vim is frozen!
+
+Vim is probably waiting for the password but not redrawing correctly. You
+should be able to enter your passphrase followed by Enter blindly and Vim
+should respond again. In this case, try, if setting the g:sudoDebug variable
+in your .vimrc helps >
+
+    :let g:sudoDebug = 1
+
+That should make the plugin output some more information and you should be
+able to see the password prompt.
+
+3) The plugin is still not working!
 
 Write me an email (look in the first line for my mail address), append the
 debug messages and tell me what exactly is not working. I will look into it
 and if there is a bug fix this plugin.
 
-3) Great work!
+4) Great work!
 
 Write me an email (look in the first line for my mail address). And if you are
 really happy, vote for the plugin and consider looking at my Amazon whishlist:
