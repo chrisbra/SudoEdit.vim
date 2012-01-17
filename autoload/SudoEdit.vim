@@ -113,8 +113,10 @@ fu! SudoEdit#SudoRead(file) "{{{2
     let cmd=':0r! ' . join(s:AuthTool, ' ') . cmd
     if exists("g:sudoDebug") && g:sudoDebug
 	call SudoEdit#echoWarn(cmd)
+	exe cmd
+    else
+	silent! exe cmd
     endif
-    silent! exe cmd
     $d 
     " Force reading undofile, if one exists
     if filereadable(undofile(a:file))
@@ -134,9 +136,6 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
 	let cmd='tee >/dev/null ' . a:file
 	let cmd=a:firstline . ',' . a:lastline . 'w !' . join(s:AuthTool, ' ') . cmd
     endif
-    if exists("g:sudoDebug") && g:sudoDebug
-	call SudoEdit#echoWarn(cmd)
-    endif
     if <sid>CheckNetrwFile(a:file)
 	let protocol = matchstr(a:file, '^[^:]:')
 	call SudoEdit#echoWarn('Using Netrw for writing')
@@ -146,7 +145,12 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
 	" Write using Netrw
 	w
     else
-	silent exe cmd
+	if exists("g:sudoDebug") && g:sudoDebug
+	    call SudoEdit#echoWarn(cmd)
+	    exe cmd
+	else
+	    silent exe cmd
+	endif
     endif
     if v:shell_error
 	if exists("g:sudoDebug") && g:sudoDebug
