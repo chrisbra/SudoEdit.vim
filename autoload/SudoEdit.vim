@@ -61,19 +61,35 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 	let &srr = s:o_srr
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
-	if has("persistent_undo") && !empty(@%) && !<sid>CheckNetrwFile(@%)
+	let file=substitute(expand("%"), '^sudo:', '', '')
+	let undofile = undofile(file)
+	if has("persistent_undo") && !empty(file) &&
+	    \!<sid>CheckNetrwFile(@%) && !empty(undofile)
 	    " Force reading in the buffer
 	    " to avoid stupid W13 warning
-	    let file=substitute(expand("%"), '^sudo:', '', '')
 	    if !a:readflag
 		sil call SudoEdit#SudoRead(file)
-		exe "sil wundo!" fnameescape(undofile(file))
-		if has("unix") || has("macunix")
+		if empty(glob(undofile)) &&
+		    \ &undodir =~ '^\.\($\|,\)'
+		    " Can't create undofile
+		    let s:msg = "Can't create undofile in current " .
+			\ "directory, skipping writing undofiles!"
+		    return
+		endif
+		try
+		    exe "sil wundo!" fnameescape(undofile(file))
+		catch
+		    " Writing undofile not possible 
+		    let s:msg = "Error occured, when writing undofile" .
+			\ v:exception
+		    return
+		endtry
+		if (has("unix") || has("macunix")) && !empty(undofile)
 		    let perm = system("stat -c '%u:%g' " . shellescape(file, 1))[:-2]
 		    let cmd  = 'sil !' . join(s:AuthTool, ' '). ' sh -c "chown '.
-				\ perm. ' -- '. shellescape(undofile(file),1) . ' && '
+				\ perm. ' -- '. shellescape(undofile,1) . ' && '
 		    " Make sure, undo file is readable for current user
-		    let cmd  .= ' chmod a+r -- '. shellescape(undofile(file),1).
+		    let cmd  .= ' chmod a+r -- '. shellescape(undofile,1).
 				\ '" 2>/dev/null'
 		    exe cmd
 		    "call system(cmd)
