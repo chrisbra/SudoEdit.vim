@@ -151,7 +151,14 @@ Write me an email (look in the first line for my mail address), append the
 debug messages and tell me what exactly is not working. I will look into it
 and if there is a bug fix this plugin.
 
-4) Great work!
+4) The plugin does not create undo-files. What's wrong?
+
+It is not directly possible to create undofiles in write-protected
+directories, therefore, when your 'undodir' setting contains '.' (the
+default), the plugin won't simply write the undofile. If you want undofiles to
+work, set the 'undodir' option to a directory, that is writable.
+
+5) Great work!
 
 Write me an email (look in the first line for my mail address). And if you are
 really happy, vote for the plugin and consider looking at my Amazon whishlist:
@@ -173,6 +180,9 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 	    - Newly created files are not set 'nomodified' (issue
 	      https://github.com/chrisbra/SudoEdit.vim/issues/12, reported by
 	      Daniel Hahler, Thanks!)
+	    - Can't create undofiles in write-protected directories (issue 
+	      https://github.com/chrisbra/SudoEdit.vim/issues/14, reported by
+	      Matias Kangasjärvelä, Thanks!)
 	0.11: Dec 15, 2011 "{{{1
 	    -change owner of undofile to that of the edited super-user file,
 	     so vim will automatically load the undofile when opening that
