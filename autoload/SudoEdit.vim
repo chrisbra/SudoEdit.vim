@@ -64,7 +64,8 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 	let file=substitute(expand("%"), '^sudo:', '', '')
 	let undofile = undofile(file)
 	if has("persistent_undo") && !empty(file) &&
-	    \!<sid>CheckNetrwFile(@%) && !empty(undofile)
+	    \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
+	    \ &l:udf
 	    " Force reading in the buffer
 	    " to avoid stupid W13 warning
 	    if !a:readflag
