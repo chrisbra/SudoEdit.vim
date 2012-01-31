@@ -5,12 +5,12 @@ autoload/SudoEdit.vim	[[[1
 254
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.11
+" Version:  0.12
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Thu, 15 Dec 2011 15:54:33 +0100
+" Last Change: Tue, 31 Jan 2012 22:00:48 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 11 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 12 :AutoInstall: SudoEdit.vim
 
 " Functions: "{{{1
 
@@ -262,7 +262,7 @@ doc/SudoEdit.txt	[[[1
 *SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.1 Thu, 15 Dec 2011 15:54:33 +0100
+Version: Vers 0.12 Tue, 31 Jan 2012 22:00:48 +0100
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -496,12 +496,12 @@ plugin/SudoEdit.vim	[[[1
 52
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.11
+" Version:  0.12
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Thu, 15 Dec 2011 15:54:33 +0100
+" Last Change: Tue, 31 Jan 2012 22:00:48 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 11 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 12 :AutoInstall: SudoEdit.vim
 " Documentation: see :h SudoEdit.txt
 
 " ---------------------------------------------------------------------
