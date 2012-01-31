@@ -10,6 +10,9 @@ version: $(PLUGIN) $(PLUGIN).vmb
 
 clean:
 	rm -rf *.vmb *.vba */*.orig *.~* .VimballRecord doc/tags
+	find . -type f \( -name "*.vba" -o -name "*.orig" -o -name "*.~*" \
+	-o -name ".VimballRecord" -o -name ".*.un~" -o -name "*.sw*" -o \
+	-name tags -o -name "*.vmb" \) -delete
 
 vimball:
 	$(PLUGIN) $(PLUGIN).vmb
