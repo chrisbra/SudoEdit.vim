@@ -1,7 +1,7 @@
 SCRIPT=plugin/SudoEdit.vim autoload/SudoEdit.vim
 DOC=doc/SudoEdit.txt
 PLUGIN=SudoEdit
-VERSION=$(shell sed -n '/Version:/{s/^.*\(\S\.\S\+\)$$/\1/;p}' $(SCRIPT))
+VERSION=$(shell sed -n '/Version:/{s/^.*\(\S\.\S\+\)$$/\1/;p}' plugin/SudoEdit.vim)
 
 .PHONY: $(PLUGIN).vmb clean
 
@@ -24,7 +24,7 @@ install:
 	vim -u NONE -N -c':so' -c':q!' ${PLUGIN}.vmb
 
 release: $(PLUGIN) $(PLUGIN).vmb
-	ln -f $(PLUGIN)-$(VERSION).vmb $(PLUGIN).vmb
+	ln -f $(PLUGIN).vmb $(PLUGIN)-$(VERSION).vmb
 
 uninstall:
 	vim -u NONE -N -c':RmVimball ${PLUGIN}.vmb'
@@ -44,5 +44,5 @@ SudoEdit:
 	perl -i.orig -pne 'if (/Version:/) {s/\.(\d*)/sprintf(".%d", 1+$$1)/e}' ${SCRIPT}
 	perl -i -pne 'if (/GetLatestVimScripts:/) {s/(\d+)\s+:AutoInstall:/sprintf("%d :AutoInstall:", 1+$$1)/e}' ${SCRIPT}
 	perl -i -pne 'if (/Last Change:/) {s/(:\s+).*\n/sprintf(": %s", `date -R`)/e}' ${SCRIPT}
-	perl -i.orig -pne 'if (/Version:/) {s/\.(\d)+.*\n/sprintf(".%d %s", 1+$$1, `date -R`)/e}' ${DOC}
+	perl -i.orig -pne 'if (/Version:/) {s/\.(\d+).*\n/sprintf(".%d %s", 1+$$1, `date -R`)/e}' ${DOC}
 
