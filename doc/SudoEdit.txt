@@ -166,7 +166,7 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
-	0.12: (unreleased) "{{{1
+	0.12: Jan 31, 2012 "{{{1
 	    - Avoid redraw when changing permissions of the undofile
 	    - Don't move cursor on Reading/Writing
 	      (issue https://github.com/chrisbra/SudoEdit.vim/issues/11,
