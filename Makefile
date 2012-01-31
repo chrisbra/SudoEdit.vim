@@ -1,6 +1,7 @@
 SCRIPT=plugin/SudoEdit.vim autoload/SudoEdit.vim
 DOC=doc/SudoEdit.txt
 PLUGIN=SudoEdit
+VERSION=$(shell sed -n '/Version:/{s/^.*\(\S\.\S\+\)$$/\1/;p}' $(SCRIPT))
 
 .PHONY: $(PLUGIN).vmb clean
 
@@ -21,6 +22,9 @@ dist-clean: clean
 
 install:
 	vim -u NONE -N -c':so' -c':q!' ${PLUGIN}.vmb
+
+release: $(PLUGIN) $(PLUGIN).vmb
+	ln -f $(PLUGIN)-$(VERSION).vmb $(PLUGIN).vmb
 
 uninstall:
 	vim -u NONE -N -c':RmVimball ${PLUGIN}.vmb'
