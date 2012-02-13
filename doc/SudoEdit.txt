@@ -166,6 +166,9 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	(unreleased) "{{{1
+	    - in graphical Vim, display messages, so one knows, that one needs
+	      to enter the password (reported by Rob Shinn, thanks!)
 	0.12: Jan 31, 2012 "{{{1
 	    - Avoid redraw when changing permissions of the undofile
 	    - Don't move cursor on Reading/Writing
