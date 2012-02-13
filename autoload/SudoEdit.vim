@@ -66,10 +66,13 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 	if has("persistent_undo") && !empty(file) &&
 	    \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
 	    \ &l:udf
-	    " Force reading in the buffer
-	    " to avoid stupid W13 warning
 	    if !a:readflag
-		sil call SudoEdit#SudoRead(file)
+		" Force reading in the buffer to avoid stupid W13 warning
+		" don't do this in GUI mode, so one does not have to enter
+		" the password again (Leave the W13 warning)
+		if !has("gui_running")
+		    sil call SudoEdit#SudoRead(file)
+		endif
 		if empty(glob(undofile)) &&
 		    \ &undodir =~ '^\.\($\|,\)'
 		    " Can't create undofile
@@ -86,12 +89,20 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 		    return
 		endtry
 		if (has("unix") || has("macunix")) && !empty(undofile)
-		    let perm = system("stat -c '%u:%g' " . shellescape(file, 1))[:-2]
-		    let cmd  = 'sil !' . join(s:AuthTool, ' '). ' sh -c "chown '.
-				\ perm. ' -- '. shellescape(undofile,1) . ' && '
+		    let perm = system("stat -c '%u:%g' " .
+			    \ shellescape(file, 1))[:-2]
+		    let cmd   = has('gui_running') ? '' : 'sil'
+		    let cmd  .= '!' . join(s:AuthTool, ' ').
+				\ ' sh -c "chown '.
+				\ perm. ' -- '. shellescape(undofile,1) .
+				\ ' && '
 		    " Make sure, undo file is readable for current user
 		    let cmd  .= ' chmod a+r -- '. shellescape(undofile,1).
 				\ '" 2>/dev/null'
+		    if has("gui_running")
+			call SudoEdit#echoWarn("Enter password again for".
+			    \ " setting permissions of the undofile")
+		    endif
 		    exe cmd
 		    "call system(cmd)
 		endif
@@ -132,7 +143,11 @@ fu! SudoEdit#SudoRead(file) "{{{2
 	call SudoEdit#echoWarn(cmd)
 	exe cmd
     else
-	silent! exe cmd
+	if has("gui_running")
+	    exe cmd
+	else
+	    silent! exe cmd
+	endif
     endif
     $d 
     " Force reading undofile, if one exists
@@ -148,10 +163,12 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
 	" Workaround since su cannot be run with :w !
 	let tmpfile = tempname()
 	exe a:firstline . ',' . a:lastline . 'w ' . tmpfile
-	let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . tmpfile . ' ' . a:file . '" --'
+	let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . tmpfile . ' ' .
+	    \ a:file . '" --'
     else
 	let cmd='tee >/dev/null ' . a:file
-	let cmd=a:firstline . ',' . a:lastline . 'w !' . join(s:AuthTool, ' ') . cmd
+	let cmd=a:firstline . ',' . a:lastline . 'w !' .
+	    \ join(s:AuthTool, ' ') . cmd
     endif
     if <sid>CheckNetrwFile(a:file)
 	let protocol = matchstr(a:file, '^[^:]:')
@@ -166,7 +183,11 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
 	    call SudoEdit#echoWarn(cmd)
 	    exe cmd
 	else
-	    silent exe cmd
+	    if has("gui_running")
+		exe cmd
+	    else
+		silent exe cmd
+	    endif
 	endif
     endif
     if v:shell_error
