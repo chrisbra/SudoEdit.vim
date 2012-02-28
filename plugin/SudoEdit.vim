@@ -28,10 +28,14 @@ endif
 "
 " Dirty hack, to make winsaveview work, ugly but works.
 " because functions with range argument reset the cursor position!
-com! -complete=file -range=% -nargs=? SudoWrite :let s:a=winsaveview()|
-      \ :<line1>,<line2>call SudoEdit#SudoDo(0, <q-args>)|call winrestview(s:a)
-com! -complete=file -nargs=? SudoRead :let s:a=winsaveview()|
-      \ :call SudoEdit#SudoDo(1, <q-args>) | call winrestview(s:a)
+com! -complete=file -bang -range=% -nargs=? SudoWrite
+      \ :let s:a=winsaveview()|
+      \ :<line1>,<line2>call SudoEdit#SudoDo(0, <q-bang>, <q-args>)|
+      \ call winrestview(s:a)
+com! -complete=file -bang -nargs=? SudoRead
+      \ :let s:a=winsaveview()|
+      \ :call SudoEdit#SudoDo(1, <q-bang>, <q-args>) |
+      \ call winrestview(s:a)
 " This would be nicer, but look at the function, it isn't really prettier!
 "com! -complete=file -range=% -nargs=? SudoWrite
 "      \ :call SudoEdit#SudoWritePrepare(<q-args>, <line1>,<line2>)

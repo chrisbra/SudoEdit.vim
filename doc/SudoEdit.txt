@@ -45,7 +45,7 @@ The SudoEdit Plugin provides 2 Commands:
 ==============================================================================
 2.1 SudoRead							 *SudoRead*
 
-	:SudoRead [file]
+	:SudoRead[!] [file]
 
 SudoRead will read the given file name using any of the configured methods for
 superuser authtication. It basically does something like this:
@@ -53,7 +53,9 @@ superuser authtication. It basically does something like this:
 :r !sudo cat file
 
 If no filename is given, SudoRead will try to reread the current file name.
-If the current buffer does not contain any file, it will abort.
+If the current buffer does not contain any file, it will abort. If the !
+argument is used, the current buffer contents will be discarded, if it was
+modified.
 
 SudoRead provides file completion, so you can use <Tab> on the commandline to
 specify the file to read.
@@ -66,7 +68,7 @@ filename completion)
 ==============================================================================
 2.2 SudoWrite							 *SudoWrite*
 
-	:[range]SudoWrite [file]
+	:[range]SudoWrite[!] [file]
 
 SudoWrite will write the given file using any of the configured methods for
 superuser authtication. It basically does something like this:
@@ -77,7 +79,8 @@ If no filename is given, SudoWrite will try to write the current file name.
 If the current buffer does not contain any file, it will abort.
 
 You can specify a range to write just like |:w|. If no range is given, it will
-write the whole file.
+write the whole file. If the bang argument is not given, the buffer will only
+be written, if it was modified.
 
 Again, you can use the protocol handler sudo: for writing.
 
@@ -169,6 +172,7 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 	(unreleased) "{{{1
 	    - in graphical Vim, display messages, so one knows, that one needs
 	      to enter the password (reported by Rob Shinn, thanks!)
+	    - Allow bang attribute to |SudoRead| and |SudoWrite|
 	0.12: Jan 31, 2012 "{{{1
 	    - Avoid redraw when changing permissions of the undofile
 	    - Don't move cursor on Reading/Writing

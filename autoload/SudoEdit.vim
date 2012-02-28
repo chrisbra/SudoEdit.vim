@@ -204,7 +204,7 @@ fu! SudoEdit#Stats(file) "{{{2
     return '"' . a:file . '" ' . line('$') . 'L, ' . getfsize(expand(a:file)) . 'C written'
 endfu
 
-fu! SudoEdit#SudoDo(readflag, file) range "{{{2
+fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     call SudoEdit#LocalSettings(1, 1)
     let s:use_sudo_protocol_handler = 0
     let file = a:file
@@ -220,10 +220,15 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
 	return
     endif
     if a:readflag
-	call SudoEdit#SudoRead(file)
+	if !&mod || !empty(a:force)
+	    call SudoEdit#SudoRead(file)
+	else
+	    call SudoEdit#echoWarn("Buffer modified, not reloading!")
+	    return
+	endif
     else
-	if !&mod
-	    call SudoEdit#echoWarn("Buffer not modified, not writing")
+	if !&mod && !empty(a:force)
+	    call SudoEdit#echoWarn("Buffer not modified, not writing!")
 	    return
 	endif
 	try
