@@ -2,7 +2,7 @@
 UseVimball
 finish
 autoload/SudoEdit.vim	[[[1
-254
+280
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
 " Version:  0.12
@@ -71,10 +71,13 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 	if has("persistent_undo") && !empty(file) &&
 	    \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
 	    \ &l:udf
-	    " Force reading in the buffer
-	    " to avoid stupid W13 warning
 	    if !a:readflag
-		sil call SudoEdit#SudoRead(file)
+		" Force reading in the buffer to avoid stupid W13 warning
+		" don't do this in GUI mode, so one does not have to enter
+		" the password again (Leave the W13 warning)
+		if !has("gui_running")
+		    sil call SudoEdit#SudoRead(file)
+		endif
 		if empty(glob(undofile)) &&
 		    \ &undodir =~ '^\.\($\|,\)'
 		    " Can't create undofile
@@ -91,12 +94,20 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 		    return
 		endtry
 		if (has("unix") || has("macunix")) && !empty(undofile)
-		    let perm = system("stat -c '%u:%g' " . shellescape(file, 1))[:-2]
-		    let cmd  = 'sil !' . join(s:AuthTool, ' '). ' sh -c "chown '.
-				\ perm. ' -- '. shellescape(undofile,1) . ' && '
+		    let perm = system("stat -c '%u:%g' " .
+			    \ shellescape(file, 1))[:-2]
+		    let cmd   = has('gui_running') ? '' : 'sil'
+		    let cmd  .= '!' . join(s:AuthTool, ' ').
+				\ ' sh -c "chown '.
+				\ perm. ' -- '. shellescape(undofile,1) .
+				\ ' && '
 		    " Make sure, undo file is readable for current user
 		    let cmd  .= ' chmod a+r -- '. shellescape(undofile,1).
 				\ '" 2>/dev/null'
+		    if has("gui_running")
+			call SudoEdit#echoWarn("Enter password again for".
+			    \ " setting permissions of the undofile")
+		    endif
 		    exe cmd
 		    "call system(cmd)
 		endif
@@ -137,7 +148,11 @@ fu! SudoEdit#SudoRead(file) "{{{2
 	call SudoEdit#echoWarn(cmd)
 	exe cmd
     else
-	silent! exe cmd
+	if has("gui_running")
+	    exe cmd
+	else
+	    silent! exe cmd
+	endif
     endif
     $d 
     " Force reading undofile, if one exists
@@ -153,10 +168,12 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
 	" Workaround since su cannot be run with :w !
 	let tmpfile = tempname()
 	exe a:firstline . ',' . a:lastline . 'w ' . tmpfile
-	let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . tmpfile . ' ' . a:file . '" --'
+	let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . tmpfile . ' ' .
+	    \ a:file . '" --'
     else
 	let cmd='tee >/dev/null ' . a:file
-	let cmd=a:firstline . ',' . a:lastline . 'w !' . join(s:AuthTool, ' ') . cmd
+	let cmd=a:firstline . ',' . a:lastline . 'w !' .
+	    \ join(s:AuthTool, ' ') . cmd
     endif
     if <sid>CheckNetrwFile(a:file)
 	let protocol = matchstr(a:file, '^[^:]:')
@@ -171,7 +188,11 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
 	    call SudoEdit#echoWarn(cmd)
 	    exe cmd
 	else
-	    silent exe cmd
+	    if has("gui_running")
+		exe cmd
+	    else
+		silent exe cmd
+	    endif
 	endif
     endif
     if v:shell_error
@@ -188,7 +209,7 @@ fu! SudoEdit#Stats(file) "{{{2
     return '"' . a:file . '" ' . line('$') . 'L, ' . getfsize(expand(a:file)) . 'C written'
 endfu
 
-fu! SudoEdit#SudoDo(readflag, file) range "{{{2
+fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     call SudoEdit#LocalSettings(1, 1)
     let s:use_sudo_protocol_handler = 0
     let file = a:file
@@ -204,10 +225,15 @@ fu! SudoEdit#SudoDo(readflag, file) range "{{{2
 	return
     endif
     if a:readflag
-	call SudoEdit#SudoRead(file)
+	if !&mod || !empty(a:force)
+	    call SudoEdit#SudoRead(file)
+	else
+	    call SudoEdit#echoWarn("Buffer modified, not reloading!")
+	    return
+	endif
     else
-	if !&mod
-	    call SudoEdit#echoWarn("Buffer not modified, not writing")
+	if !&mod && !empty(a:force)
+	    call SudoEdit#echoWarn("Buffer not modified, not writing!")
 	    return
 	endif
 	try
@@ -258,7 +284,7 @@ endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 :  }}}
 doc/SudoEdit.txt	[[[1
-233
+236
 *SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
@@ -427,6 +453,9 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	(unreleased) "{{{1
+	    - in graphical Vim, display messages, so one knows, that one needs
+	      to enter the password (reported by Rob Shinn, thanks!)
 	0.12: Jan 31, 2012 "{{{1
 	    - Avoid redraw when changing permissions of the undofile
 	    - Don't move cursor on Reading/Writing
@@ -493,7 +522,7 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 Modeline: "{{{1
 vim:tw=78:ts=8:ft=help:fdm=marker:fdl=0:norl
 plugin/SudoEdit.vim	[[[1
-52
+56
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
 " Version:  0.12
@@ -524,10 +553,14 @@ endif
 "
 " Dirty hack, to make winsaveview work, ugly but works.
 " because functions with range argument reset the cursor position!
-com! -complete=file -range=% -nargs=? SudoWrite :let s:a=winsaveview()|
-      \ :<line1>,<line2>call SudoEdit#SudoDo(0, <q-args>)|call winrestview(s:a)
-com! -complete=file -nargs=? SudoRead :let s:a=winsaveview()|
-      \ :call SudoEdit#SudoDo(1, <q-args>) | call winrestview(s:a)
+com! -complete=file -bang -range=% -nargs=? SudoWrite
+      \ :let s:a=winsaveview()|
+      \ :<line1>,<line2>call SudoEdit#SudoDo(0, <q-bang>, <q-args>)|
+      \ call winrestview(s:a)
+com! -complete=file -bang -nargs=? SudoRead
+      \ :let s:a=winsaveview()|
+      \ :call SudoEdit#SudoDo(1, <q-bang>, <q-args>) |
+      \ call winrestview(s:a)
 " This would be nicer, but look at the function, it isn't really prettier!
 "com! -complete=file -range=% -nargs=? SudoWrite
 "      \ :call SudoEdit#SudoWritePrepare(<q-args>, <line1>,<line2>)
