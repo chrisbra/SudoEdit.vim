@@ -35,7 +35,7 @@ fu! <sid>Init() "{{{2
 	let s:sudoAuthArg=g:sudoAuthArg
     endif
 
-    let s:AuthTool=SudoEdit#CheckAuthTool(split(s:sudoAuth, '\s'))
+    let s:AuthTool=<sid>CheckAuthTool(split(s:sudoAuth, '\s'))
     if empty(s:AuthTool)
 	finish
     endif
@@ -43,12 +43,13 @@ fu! <sid>Init() "{{{2
     if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
 	let s:sudoAuthArg="-c"
     endif
+    call <sid>SshAskPasswd()
     call add(s:AuthTool, s:sudoAuthArg . " ")
     " Stack of messages
     let s:msg=''
 endfu
 
-fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
+fu! <sid>LocalSettings(setflag, readflag) "{{{2
     if a:setflag
 	" Set shellrediraction temporarily
 	" This is used to get su working right!
@@ -71,7 +72,8 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 		" don't do this in GUI mode, so one does not have to enter
 		" the password again (Leave the W13 warning)
 		if !has("gui_running")
-		    sil call SudoEdit#SudoRead(file)
+		    "sil call <sid>SudoRead(file)
+		    exe "e!" file
 		endif
 		if empty(glob(undofile)) &&
 		    \ &undodir =~ '^\.\($\|,\)'
@@ -100,7 +102,7 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 		    let cmd  .= ' chmod a+r -- '. shellescape(undofile,1).
 				\ '" 2>/dev/null'
 		    if has("gui_running")
-			call SudoEdit#echoWarn("Enter password again for".
+			call <sid>echoWarn("Enter password again for".
 			    \ " setting permissions of the undofile")
 		    endif
 		    exe cmd
@@ -111,7 +113,7 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
     endif
 endfu
 
-fu! SudoEdit#CheckAuthTool(Authlist) "{{{2
+fu! <sid>CheckAuthTool(Authlist) "{{{2
     for tool in a:Authlist
 	if executable(tool)
 	    return [tool]
@@ -122,13 +124,13 @@ fu! SudoEdit#CheckAuthTool(Authlist) "{{{2
     return []
 endfu
 
-fu! SudoEdit#echoWarn(mess) "{{{2
+fu! <sid>echoWarn(mess) "{{{2
     echohl WarningMsg
     echomsg a:mess
     echohl Normal
 endfu
 
-fu! SudoEdit#SudoRead(file) "{{{2
+fu! <sid>SudoRead(file) "{{{2
     %d
     if !exists("g:sudoDebug")
 	let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
@@ -140,7 +142,7 @@ fu! SudoEdit#SudoRead(file) "{{{2
     endif
     let cmd=':0r! ' . join(s:AuthTool, ' ') . cmd
     if exists("g:sudoDebug") && g:sudoDebug
-	call SudoEdit#echoWarn(cmd)
+	call <sid>echoWarn(cmd)
 	exe cmd
     else
 	if has("gui_running")
@@ -158,7 +160,7 @@ fu! SudoEdit#SudoRead(file) "{{{2
     set nomod
 endfu
 
-fu! SudoEdit#SudoWrite(file) range "{{{2
+fu! <sid>SudoWrite(file) range "{{{2
     if  s:AuthTool[0] =~ '^su$'
 	" Workaround since su cannot be run with :w !
 	let tmpfile = tempname()
@@ -172,7 +174,7 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
     endif
     if <sid>CheckNetrwFile(a:file)
 	let protocol = matchstr(a:file, '^[^:]:')
-	call SudoEdit#echoWarn('Using Netrw for writing')
+	call <sid>echoWarn('Using Netrw for writing')
 	let uid = input(protocol . ' username: ')
 	let passwd = inputsecret('password: ')
 	call NetUserPass(uid, passwd)
@@ -180,7 +182,7 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
 	w
     else
 	if exists("g:sudoDebug") && g:sudoDebug
-	    call SudoEdit#echoWarn(cmd)
+	    call <sid>echoWarn(cmd)
 	    exe cmd
 	else
 	    if has("gui_running")
@@ -192,20 +194,20 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
     endif
     if v:shell_error
 	if exists("g:sudoDebug") && g:sudoDebug
-	    call SudoEdit#echoWarn(v:shell_error)
+	    call <sid>echoWarn(v:shell_error)
 	endif
 	throw "writeError"
     endif
 endfu
 
-fu! SudoEdit#Stats(file) "{{{2
+fu! <sid>Stats(file) "{{{2
     ":w echoes a string like this by default:
     ""SudoEdit.vim" 108L, 2595C geschrieben
     return '"' . a:file . '" ' . line('$') . 'L, ' . getfsize(expand(a:file)) . 'C written'
 endfu
 
 fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
-    call SudoEdit#LocalSettings(1, 1)
+    call <sid>LocalSettings(1, 1)
     let s:use_sudo_protocol_handler = 0
     let file = a:file
     if file =~ '^sudo:'
@@ -215,32 +217,32 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     let file = empty(a:file) ? expand("%") : file
     "let file = !empty(a:file) ? substitute(a:file, '^sudo:', '', '') : expand("%")
     if empty(file)
-	call SudoEdit#echoWarn("Cannot write file. Please enter filename for writing!")
-	call SudoEdit#LocalSettings(0, 1)
+	call <sid>echoWarn("Cannot write file. Please enter filename for writing!")
+	call <sid>LocalSettings(0, 1)
 	return
     endif
     if a:readflag
 	if !&mod || !empty(a:force)
-	    call SudoEdit#SudoRead(file)
+	    call <sid>SudoRead(file)
 	else
-	    call SudoEdit#echoWarn("Buffer modified, not reloading!")
+	    call <sid>echoWarn("Buffer modified, not reloading!")
 	    return
 	endif
     else
 	if !&mod && !empty(a:force)
-	    call SudoEdit#echoWarn("Buffer not modified, not writing!")
+	    call <sid>echoWarn("Buffer not modified, not writing!")
 	    return
 	endif
 	try
-	    exe a:firstline . ',' . a:lastline . 'call SudoEdit#SudoWrite(' . shellescape(file,1) . ')'
-	    let s:msg = SudoEdit#Stats(file)
+	    exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite(' . shellescape(file,1) . ')'
+	    let s:msg = <sid>Stats(file)
 	catch /writeError/
 	    let a=v:errmsg
 	    echoerr "There was an error writing the file!"
 	    echoerr a
 	endtry
     endif
-    call SudoEdit#LocalSettings(0, a:readflag)
+    call <sid>LocalSettings(0, a:readflag)
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
 	let file = 'sudo:' . fnamemodify(file, ':p')
     endif
@@ -252,16 +254,19 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     if &mod
 	setl nomod
     endif
-    exe ':sil f ' . file
+    if s:use_sudo_protocol_handler || empty(expand("%"))
+	exe ':sil f ' . file
+	filetype detect
+    endif
     if !empty(s:msg)
-	"redr!
+	redr!
 	echo s:msg
 	let s:msg = ""
     endif
 endfu
 
 " Not needed
-fu! SudoEdit#SudoWritePrepare(name, line1, line2) "{{{2
+fu! <sid>SudoWritePrepare(name, line1, line2) "{{{2
     let s:oldpos = winsaveview()
     let name=a:name
     if empty(name)
@@ -275,6 +280,29 @@ endfu
 
 fu! <sid>CheckNetrwFile(file) "{{{2
     return a:file =~ '^\%(dav\|fetch\|ftp\|http\|rcp\|rsync\|scp\|sftp\):'
+endfu
+
+fu! <sid>SshAskPasswd() "{{{2
+    if s:AuthTool[0] != 'sudo' ||
+	\ ( exists("g:sudo_no_gui") && g:sudo_no_gui == 1) ||
+	\ !has("unix")
+	" Todo: What about MacVim?
+	return
+    endif
+
+    let askpwd = "/usr/lib/openssh/gnome-ssh-askpass"
+    if exists("g:sudo_askpass")
+	let askpwd = g:sudo_askpw. ' '. askpw
+    endif
+    let sudo_arg = '-A'
+    for item in [ "$SUDO_ASKPASS", askpwd ]
+	if executable(expand(item))
+	    " give environment value to sudo, so -A knows
+	    " which program to call
+	    call insert(s:AuthTool, 'SUDO_ASKPASS='.shellescape(item,1), 0)
+	    call add(s:AuthTool, '-A')
+	endif
+    endfor
 endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 :  }}}
