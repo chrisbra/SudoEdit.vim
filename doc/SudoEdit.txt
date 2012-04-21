@@ -51,9 +51,9 @@ The SudoEdit Plugin provides 2 Commands:
 	:SudoRead[!] [file]
 
 SudoRead will read the given file name using any of the configured methods for
-superuser authtication. It basically does something like this:
+superuser authtication. It basically does something like this: >
 
-:r !sudo cat file
+    :r !sudo cat file
 
 If no filename is given, SudoRead will try to reread the current file name.
 If the current buffer does not contain any file, it will abort. If the !
@@ -74,9 +74,9 @@ filename completion)
 	:[range]SudoWrite[!] [file]
 
 SudoWrite will write the given file using any of the configured methods for
-superuser authtication. It basically does something like this:
+superuser authtication. It basically does something like this: >
 
-:w !sudo tee >/dev/null file
+    :w !sudo tee >/dev/null file
 
 If no filename is given, SudoWrite will try to write the current file name.
 If the current buffer does not contain any file, it will abort.
@@ -102,9 +102,10 @@ g:sudoAuth. If this variable exists, SudoEdit will first try to use the
 specified tool before falling back to either sudo or su (in that order).
 
 For example, you could use ssh to use as authentication tool by setting
-g:sudoAuth in your .vimrc as follows:
+g:sudoAuth in your .vimrc as follows: >
 
-let g:sudoAuth="ssh"
+    let g:sudoAuth="ssh"
+<
 							       *g:sudoAuthArg*
 
 The variable g:sudoAuthArg specifies how to use the given authentication tool.
@@ -113,9 +114,9 @@ also define here which user to change to. By default, SudoEdit will try to
 become the superuser e.g. root. 
 
 If you want to use ssh as authentication facility, you can set g:sudoAuthArg
-as follows in your .vimrc:
+as follows in your .vimrc: >
 
-let g:sudoAuthArg="root@localhost"
+    let g:sudoAuthArg="root@localhost"
 
 For su, you would use g:sudoAuthArg="-c", but you do not have to set it, the
 plugin will automatically use -c if it detects, that su is used.
@@ -140,10 +141,11 @@ If you like to disable this, set the variable g:sudo_no_gui, e.g. >
 4. SudoEdit Debugging					    *SudoEdit-debug*
 
 You can debug this plugin and the shell code that will be executed by
-setting:
-let g:sudoDebug=1
-This ensures, that debug messages will be appended to the |message-history|.
+setting: >
 
+    let g:sudoDebug=1
+
+This ensures, that debug messages will be appended to the |message-history|.
 
 ==============================================================================
 5. SudoEdit F.A.Q.					    *SudoEdit-faq*
