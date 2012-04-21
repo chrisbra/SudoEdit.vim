@@ -202,6 +202,10 @@ fu! <sid>SudoWrite(file) range "{{{2
 	endif
 	throw "writeError"
     endif
+    " Write successful
+    if &mod
+	setl nomod
+    endif
 endfu
 
 fu! <sid>Stats(file) "{{{2
@@ -253,10 +257,6 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     if v:shell_error
 	echoerr "Error " . ( a:readflag ? "reading " : "writing to " )  .
 		\ file . "! Password wrong?"
-    endif
-    " Write successfull
-    if &mod
-	setl nomod
     endif
     if s:use_sudo_protocol_handler || empty(expand("%"))
 	exe ':sil f ' . file
