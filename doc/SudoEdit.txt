@@ -38,7 +38,10 @@ will fall back and try to use su. Note, that you might have to configure these
 tools, before they can use them successfully.
 
 SudoEdit requires at least a Vim Version 7 with patch 111 installed. Patch 111
-introduced the |shellescape()| functionality.
+introduced the |shellescape()| functionality. On a Mac (using MacVim), it uses
+the command "security execute-with-privileges" to query for your password, on
+Unix, it can make use of graphical password dialog tools like
+ssh-gnome-askpass (see |g:sudo_askpass|)
 
 The SudoEdit Plugin provides 2 Commands:
 
@@ -102,7 +105,6 @@ For example, you could use ssh to use as authentication tool by setting
 g:sudoAuth in your .vimrc as follows:
 
 let g:sudoAuth="ssh"
-
 							       *g:sudoAuthArg*
 
 The variable g:sudoAuthArg specifies how to use the given authentication tool.
@@ -117,6 +119,22 @@ let g:sudoAuthArg="root@localhost"
 
 For su, you would use g:sudoAuthArg="-c", but you do not have to set it, the
 plugin will automatically use -c if it detects, that su is used.
+
+					    *g:sudo_no_gui* *g:sudo_askpass*
+If the plugin uses sudo for authenticating and the plugin finds any of
+gnome-ssh-askpass, ksshaskpass or x11-ssh-askpass and a graphical Display
+connection is possible, the plugin uses the first of the tools it finds to
+display a graphical dialog, in which you can enter the password. If you like
+to specify a different tool, you can set the g:sudo_askpass variable to
+specify a different tool to use, e.g. >
+
+    :let g:sudo_askpass='/usr/lib/openssh/gnome-ssh-askpass'
+
+to make use of gnome-ssh-askpass for querying the password.
+
+If you like to disable this, set the variable g:sudo_no_gui, e.g. >
+
+    :let g:sudo_no_gui=1
 
 ==============================================================================
 4. SudoEdit Debugging					    *SudoEdit-debug*
@@ -173,6 +191,7 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 	    - in graphical Vim, display messages, so one knows, that one needs
 	      to enter the password (reported by Rob Shinn, thanks!)
 	    - Allow bang attribute to |SudoRead| and |SudoWrite|
+	    - Make use of graphical dialogs to read the passwords.
 	0.12: Jan 31, 2012 "{{{1
 	    - Avoid redraw when changing permissions of the undofile
 	    - Don't move cursor on Reading/Writing
