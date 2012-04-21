@@ -258,7 +258,9 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	echoerr "Error " . ( a:readflag ? "reading " : "writing to " )  .
 		\ file . "! Password wrong?"
     endif
-    if s:use_sudo_protocol_handler || empty(expand("%"))
+    if s:use_sudo_protocol_handler ||
+	    \ empty(expand("%")) ||
+	    \ file != expand("%")
 	exe ':sil f ' . file
 	filetype detect
     endif
