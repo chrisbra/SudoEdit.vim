@@ -35,7 +35,7 @@ fu! <sid>Init() "{{{2
 	let s:sudoAuthArg=g:sudoAuthArg
     endif
 
-    let s:AuthTool=<sid>CheckAuthTool(split(s:sudoAuth, '\s'))
+    let s:AuthTool = <sid>CheckAuthTool(split(s:sudoAuth, '\s'))
     if empty(s:AuthTool)
 	finish
     endif
@@ -114,6 +114,10 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 endfu
 
 fu! <sid>CheckAuthTool(Authlist) "{{{2
+    if has("mac") || has("macunix")
+	" for Mac we hardcode program to use
+	return ["security execute-with-privileges"]
+    endif
     for tool in a:Authlist
 	if executable(tool)
 	    return [tool]
@@ -285,17 +289,20 @@ endfu
 fu! <sid>SshAskPasswd() "{{{2
     if s:AuthTool[0] != 'sudo' ||
 	\ ( exists("g:sudo_no_gui") && g:sudo_no_gui == 1) ||
-	\ !has("unix")
+	\ !has("unix") ||
+	\ !exists("$DISPLAY")
 	" Todo: What about MacVim?
 	return
     endif
 
-    let askpwd = "/usr/lib/openssh/gnome-ssh-askpass"
+    let askpwd = ["/usr/lib/openssh/gnome-ssh-askpass",
+		\ "/usr/bin/ksshaskpass",
+		\ "/usr/lib/ssh/x11-ssh-askpass" ]
     if exists("g:sudo_askpass")
-	let askpwd = g:sudo_askpw. ' '. askpw
+	let askpwd = insert(askpw, g:sudo_askpw, 0)
     endif
     let sudo_arg = '-A'
-    for item in [ "$SUDO_ASKPASS", askpwd ]
+    for item in [ "$SUDO_ASKPASS"] + askpwd
 	if executable(expand(item))
 	    " give environment value to sudo, so -A knows
 	    " which program to call
