@@ -16,6 +16,9 @@ fu! <sid>Init() "{{{2
 " You can specify one in your .vimrc using the
 " global variable g:sudoAuth
     let s:sudoAuth=" sudo su "
+    if has("mac") || has("macunix")
+	let s:sudoAuth = "security" . s:sudoAuth
+    endif
     if exists("g:sudoAuth")
 	let s:sudoAuth = g:sudoAuth . s:sudoAuth
     endif
@@ -42,8 +45,10 @@ fu! <sid>Init() "{{{2
 
     if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
 	let s:sudoAuthArg="-c"
+    elseif s:AuthTool[0] == "security" && empty(s:sudoAuthArg)
+	let s:sudoAuthArg="execute-with-privileges"
     endif
-    call <sid>SshAskPasswd()
+    call <sid>SudoAskPasswd()
     call add(s:AuthTool, s:sudoAuthArg . " ")
     " Stack of messages
     let s:msg=''
@@ -114,10 +119,6 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 endfu
 
 fu! <sid>CheckAuthTool(Authlist) "{{{2
-    if has("mac") || has("macunix")
-	" for Mac we hardcode program to use
-	return ["security execute-with-privileges"]
-    endif
     for tool in a:Authlist
 	if executable(tool)
 	    return [tool]
@@ -288,12 +289,11 @@ fu! <sid>CheckNetrwFile(file) "{{{2
     return a:file =~ '^\%(dav\|fetch\|ftp\|http\|rcp\|rsync\|scp\|sftp\):'
 endfu
 
-fu! <sid>SshAskPasswd() "{{{2
+fu! <sid>SudoAskPasswd() "{{{2
     if s:AuthTool[0] != 'sudo' ||
 	\ ( exists("g:sudo_no_gui") && g:sudo_no_gui == 1) ||
 	\ !has("unix") ||
 	\ !exists("$DISPLAY")
-	" Todo: What about MacVim?
 	return
     endif
 
@@ -304,12 +304,20 @@ fu! <sid>SshAskPasswd() "{{{2
 	let askpwd = insert(askpw, g:sudo_askpass, 0)
     endif
     let sudo_arg = '-A'
-    for item in [ "$SUDO_ASKPASS"] + askpwd
-	if executable(expand(item))
+    let sudo_askpass = expand("$SUDO_ASKPASS")
+    if sudo_askpass != "$SUDO_ASKPASS"
+	let list = [ sudo_askpass ] + askpwd
+    else
+	let list = askpwd
+    endif
+    for item in list
+	if executable(item)
 	    " give environment value to sudo, so -A knows
 	    " which program to call
-	    call insert(s:AuthTool, 'SUDO_ASKPASS='.shellescape(item,1), 0)
-	    call add(s:AuthTool, '-A')
+	    if (s:AuthTool[0] !~ 'SUDO_ASKPASS')
+		call insert(s:AuthTool, 'SUDO_ASKPASS='.shellescape(item,1), 0)
+		call add(s:AuthTool, '-A')
+	    endif
 	endif
     endfor
 endfu
