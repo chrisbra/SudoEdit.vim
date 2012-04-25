@@ -88,7 +88,7 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		    return
 		endif
 		try
-		    call <sid>Exec("sil wundo!" fnameescape(undofile(file)))
+		    call <sid>Exec("sil wundo!". fnameescape(undofile(file)))
 		catch
 		    " Writing undofile not possible 
 		    let s:msg = "Error occured, when writing undofile" .
