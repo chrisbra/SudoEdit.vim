@@ -59,12 +59,16 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 	" Set shellrediraction temporarily
 	" This is used to get su working right!
 	let s:o_srr = &srr
+	" avoid W11 warning
+	let s:o_ar  = &l:ar
 	let &srr = '>'
+	setl ar
 	call <sid>Init()
     else
 	" Reset old settings
 	" shellredirection
-	let &srr = s:o_srr
+	let &srr  = s:o_srr
+	let &l:ar = s:o_ar
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
 	let file=substitute(expand("%"), '^sudo:', '', '')
@@ -76,7 +80,7 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		" Force reading in the buffer to avoid stupid W13 warning
 		" don't do this in GUI mode, so one does not have to enter
 		" the password again (Leave the W13 warning)
-		if !has("gui_running")
+		if !has("gui_running") && s:new_file
 		    "sil call <sid>SudoRead(file)
 		    exe "e!" file
 		endif
@@ -96,14 +100,13 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		    return
 		endtry
 		if (has("unix") || has("macunix")) && !empty(undofile)
-		    let ufile = shellescape(escape(undofile, '\\'),1)
+		    let ufile = string(shellescape(undofile, 1))
 		    let perm = system("stat -c '%u:%g' " .
 			    \ shellescape(file, 1))[:-2]
-		    let cmd  = '!' . join(s:AuthTool, ' ').
-				\ ' sh -c "chown '.
-				\ perm. ' -- '. ufile. ' && '
 		    " Make sure, undo file is readable for current user
-		    let cmd  .= ' chmod a+r -- '. ufile. '" 2>/dev/null'
+		    let cmd  = printf("!%s sh -c 'chown %s -- %s &&",
+				\ join(s:AuthTool, ' '), perm, ufile)
+		    let cmd .= printf(" chmod a+r -- %s 2>/dev/null'", ufile)
 		    if has("gui_running")
 			call <sid>echoWarn("Enter password again for".
 			    \ " setting permissions of the undofile")
@@ -171,6 +174,10 @@ fu! <sid>SudoWrite(file) range "{{{2
 	" Write using Netrw
 	w
     else
+	let s:new_file = 0
+	if empty(glob(a:file))
+	    let s:new_file = 1
+	endif
 	call <sid>Exec(cmd)
     endif
     if v:shell_error
