@@ -88,7 +88,7 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		    return
 		endif
 		try
-		    call <sid>Exec("sil wundo!". fnameescape(undofile(file)))
+		    call <sid>Exec("wundo! ". fnameescape(undofile(file)))
 		catch
 		    " Writing undofile not possible 
 		    let s:msg = "Error occured, when writing undofile" .
@@ -96,16 +96,14 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		    return
 		endtry
 		if (has("unix") || has("macunix")) && !empty(undofile)
+		    let ufile = shellescape(escape(undofile, '\\'),1)
 		    let perm = system("stat -c '%u:%g' " .
 			    \ shellescape(file, 1))[:-2]
-		    "let cmd   = has('gui_running') ? '' : 'sil'
-		    let cmd  .= '!' . join(s:AuthTool, ' ').
+		    let cmd  = '!' . join(s:AuthTool, ' ').
 				\ ' sh -c "chown '.
-				\ perm. ' -- '. shellescape(undofile,1) .
-				\ ' && '
+				\ perm. ' -- '. ufile. ' && '
 		    " Make sure, undo file is readable for current user
-		    let cmd  .= ' chmod a+r -- '. shellescape(undofile,1).
-				\ '" 2>/dev/null'
+		    let cmd  .= ' chmod a+r -- '. ufile. '" 2>/dev/null'
 		    if has("gui_running")
 			call <sid>echoWarn("Enter password again for".
 			    \ " setting permissions of the undofile")
@@ -137,11 +135,7 @@ endfu
 
 fu! <sid>SudoRead(file) "{{{2
     %d
-    if !exists("g:sudoDebug")
-	let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
-    else
-	let cmd='cat ' . shellescape(a:file,1) 
-    endif
+    let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
     if  s:AuthTool[0] =~ '^su$'
         let cmd='"' . cmd . '" --'
     endif
@@ -305,15 +299,15 @@ fu! <sid>SudoAskPasswd() "{{{2
 endfu
 
 fu! <sid>Exec(cmd) "{{{2
+    let cmd = a:cmd
     if exists("g:sudoDebug") && g:sudoDebug
-	call <sid>echoWarn(a:cmd)
-	exe a:cmd
+	let cmd = substitute(a:cmd, '2>/dev/null', '', 'g')
+	call <sid>echoWarn(cmd)
+    endif
+    if has("gui_running")
+	exe cmd
     else
-	if has("gui_running")
-	    exe a:cmd
-	else
-	    silent exe a:cmd
-	endif
+	silent exe cmd
     endif
 endfu
 " Modeline {{{1
