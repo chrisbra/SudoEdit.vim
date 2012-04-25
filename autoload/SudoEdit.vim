@@ -88,7 +88,7 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		    return
 		endif
 		try
-		    exe "sil wundo!" fnameescape(undofile(file))
+		    call <sid>Exec("sil wundo!" fnameescape(undofile(file)))
 		catch
 		    " Writing undofile not possible 
 		    let s:msg = "Error occured, when writing undofile" .
@@ -98,7 +98,7 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		if (has("unix") || has("macunix")) && !empty(undofile)
 		    let perm = system("stat -c '%u:%g' " .
 			    \ shellescape(file, 1))[:-2]
-		    let cmd   = has('gui_running') ? '' : 'sil'
+		    "let cmd   = has('gui_running') ? '' : 'sil'
 		    let cmd  .= '!' . join(s:AuthTool, ' ').
 				\ ' sh -c "chown '.
 				\ perm. ' -- '. shellescape(undofile,1) .
@@ -110,10 +110,7 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 			call <sid>echoWarn("Enter password again for".
 			    \ " setting permissions of the undofile")
 		    endif
-		    if exists("g:sudoDebug") && g:sudoDebug
-			call <sid>echoWarn(cmd)
-		    endif
-		    exe cmd
+		    call <sid>Exec(cmd)
 		    "call system(cmd)
 		endif
 	    endif
@@ -149,16 +146,7 @@ fu! <sid>SudoRead(file) "{{{2
         let cmd='"' . cmd . '" --'
     endif
     let cmd=':0r! ' . join(s:AuthTool, ' ') . cmd
-    if exists("g:sudoDebug") && g:sudoDebug
-	call <sid>echoWarn(cmd)
-	exe cmd
-    else
-	if has("gui_running")
-	    exe cmd
-	else
-	    silent! exe cmd
-	endif
-    endif
+    call <sid>Exec(cmd)
     $d 
     " Force reading undofile, if one exists
     if filereadable(undofile(a:file))
@@ -189,16 +177,7 @@ fu! <sid>SudoWrite(file) range "{{{2
 	" Write using Netrw
 	w
     else
-	if exists("g:sudoDebug") && g:sudoDebug
-	    call <sid>echoWarn(cmd)
-	    exe cmd
-	else
-	    if has("gui_running")
-		exe cmd
-	    else
-		silent exe cmd
-	    endif
-	endif
+	call <sid>Exec(cmd)
     endif
     if v:shell_error
 	if exists("g:sudoDebug") && g:sudoDebug
@@ -323,6 +302,19 @@ fu! <sid>SudoAskPasswd() "{{{2
 	    endif
 	endif
     endfor
+endfu
+
+fu! <sid>Exec(cmd) "{{{2
+    if exists("g:sudoDebug") && g:sudoDebug
+	call <sid>echoWarn(a:cmd)
+	exe a:cmd
+    else
+	if has("gui_running")
+	    exe a:cmd
+	else
+	    silent exe a:cmd
+	endif
+    endif
 endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 :  }}}
