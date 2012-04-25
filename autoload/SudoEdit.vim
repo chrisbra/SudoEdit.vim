@@ -110,6 +110,9 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 			call <sid>echoWarn("Enter password again for".
 			    \ " setting permissions of the undofile")
 		    endif
+		    if exists("g:sudoDebug") && g:sudoDebug
+			call <sid>echoWarn(cmd)
+		    endif
 		    exe cmd
 		    "call system(cmd)
 		endif
