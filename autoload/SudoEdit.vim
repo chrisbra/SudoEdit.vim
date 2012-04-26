@@ -104,8 +104,8 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		    let perm = system("stat -c '%u:%g' " .
 			    \ shellescape(file, 1))[:-2]
 		    " Make sure, undo file is readable for current user
-		    let cmd  = printf("!%s sh -c 'chown %s -- %s &&",
-				\ join(s:AuthTool, ' '), perm, ufile)
+		    let cmd  = printf("!%s sh -c 'test -f %s && chown %s -- %s &&",
+				\ join(s:AuthTool, ' '), ufile, perm, ufile)
 		    let cmd .= printf(" chmod a+r -- %s 2>/dev/null'", ufile)
 		    if has("gui_running")
 			call <sid>echoWarn("Enter password again for".
@@ -309,12 +309,17 @@ fu! <sid>Exec(cmd) "{{{2
     let cmd = a:cmd
     if exists("g:sudoDebug") && g:sudoDebug
 	let cmd = substitute(a:cmd, '2>/dev/null', '', 'g')
+	let cmd = 'verb '. cmd
 	call <sid>echoWarn(cmd)
-    endif
-    if has("gui_running")
 	exe cmd
+	" Allow the user to read messages
+	sleep 3
     else
-	silent exe cmd
+	if has("gui_running")
+	    exe cmd
+	else
+	    silent exe cmd
+	endif
     endif
 endfu
 " Modeline {{{1
