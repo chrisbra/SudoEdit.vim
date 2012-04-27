@@ -23,16 +23,42 @@ if v:version < 700 || ( v:version == 700 && !has("patch111"))
 endif
 
 " ---------------------------------------------------------------------
+" Functions {{{1
+func! <sid>ExpandFiles(A, L, P) "{{{
+  if a:A =~ '^s\%[udo:]$'
+    return [ "sudo:" ]
+  endif
+  let pat = matchstr(a:A, '^\(s\%[udo:]\)\?\zs.*')
+  let gpat = (pat[0] =~ '[./]' ? pat : '/'.pat). '*'
+  if !empty(pat)
+    " Patch 7.3.465 introduced the list parameter to glob()
+    if v:version > 703 || (v:version == 703 && has('patch465'))
+      let res = glob(gpat, 1, 1)
+    else
+      let res = split(glob(gpat, 1),"\n")
+    endif
+    call filter(res, '!empty(v:val)')
+    call filter(res, 'v:val =~ pat')
+    if a:A =~ '^s\%[udo:]'
+      call map(res, '''sudo:''.v:val')
+    endif
+    return res
+  else
+    return ''
+  endif
+endfu
+
+" ---------------------------------------------------------------------
 " Public Interface {{{1
 " Define User-Commands and Autocommand "{{{
 "
 " Dirty hack, to make winsaveview work, ugly but works.
 " because functions with range argument reset the cursor position!
-com! -complete=file -bang -range=% -nargs=? SudoWrite
+com! -complete=customlist,<sid>ExpandFiles -bang -range=% -nargs=? SudoWrite
       \ :let s:a=winsaveview()|
       \ :<line1>,<line2>call SudoEdit#SudoDo(0, <q-bang>, <q-args>)|
       \ call winrestview(s:a)
-com! -complete=file -bang -nargs=? SudoRead
+com! -complete=customlist,<sid>ExpandFiles -bang -nargs=? SudoRead
       \ :let s:a=winsaveview()|
       \ :call SudoEdit#SudoDo(1, <q-bang>, <q-args>) |
       \ call winrestview(s:a)
