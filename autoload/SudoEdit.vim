@@ -54,7 +54,7 @@ fu! <sid>Init() "{{{2
 	call add(s:AuthTool, s:sudoAuthArg . " ")
     endif
     " Stack of messages
-    let s:msg=''
+    let s:msg = []
 endfu
 
 fu! <sid>LocalSettings(setflag, readflag) "{{{2
@@ -91,18 +91,17 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		if empty(glob(undofile)) &&
 		    \ &undodir =~ '^\.\($\|,\)'
 		    " Can't create undofile
-		    let s:msg = "Can't create undofile in current " .
-			\ "directory, skipping writing undofiles!"
+		    call add(s:msg, "Can't create undofile in current " .
+			\ "directory, skipping writing undofiles!")
 		    return
 		endif
-		try
-		    call <sid>Exec("wundo! ". fnameescape(undofile(file)))
-		catch
+		call <sid>Exec("wundo! ". fnameescape(undofile(file)))
+		if empty(glob(fnameescape(undofile(file))))
 		    " Writing undofile not possible 
-		    let s:msg = "Error occured, when writing undofile" .
-			\ v:exception
+		    call add(s:msg,  "Error occured, when writing undofile" .
+			\ v:exception)
 		    return
-		endtry
+		endif
 		if (has("unix") || has("macunix")) && !empty(undofile)
 		    let ufile = string(shellescape(undofile, 1))
 		    let perm = system("stat -c '%u:%g' " .
@@ -149,6 +148,10 @@ fu! <sid>SudoRead(file) "{{{2
     endif
     let cmd=':0r! ' . join(s:AuthTool, ' ') . cmd
     call <sid>Exec(cmd)
+    if v:shell_error
+	echoerr "Error reading ". a:file . "! Password wrong?"
+	throw /sudo:readError/
+    endif
     sil $d _
     " Force reading undofile, if one exists
     if filereadable(undofile(a:file))
@@ -189,7 +192,7 @@ fu! <sid>SudoWrite(file) range "{{{2
 	if exists("g:sudoDebug") && g:sudoDebug
 	    call <sid>echoWarn(v:shell_error)
 	endif
-	throw "writeError"
+	throw "sudo:writeError"
     endif
     " Write successful
     if &mod
@@ -217,35 +220,35 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	call <sid>LocalSettings(0, 1)
 	return
     endif
-    if a:readflag
-	if !&mod || !empty(a:force)
-	    call <sid>SudoRead(file)
+    try
+	if a:readflag
+	    if !&mod || !empty(a:force)
+		call <sid>SudoRead(file)
+	    else
+		call <sid>echoWarn("Buffer modified, not reloading!")
+		return
+	    endif
 	else
-	    call <sid>echoWarn("Buffer modified, not reloading!")
-	    return
-	endif
-    else
-	if !&mod && !empty(a:force)
-	    call <sid>echoWarn("Buffer not modified, not writing!")
-	    return
-	endif
-	try
+	    if !&mod && !empty(a:force)
+		call <sid>echoWarn("Buffer not modified, not writing!")
+		return
+	    endif
 	    exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite('.
 		\ shellescape(file,1) . ')'
-	    let s:msg = <sid>Stats(file)
-	catch /writeError/
-	    let a=v:errmsg
-	    echoerr "There was an error writing the file!"
-	    echoerr a
-	endtry
-    endif
-    call <sid>LocalSettings(0, a:readflag)
+	    call add(s:msg, <sid>Stats(file))
+	endif
+    catch /sudo:writeError/
+	call <sid>Exception("There was an error writing the file!")
+	return
+    catch /sudo:readError/
+	call <sid>Exception("There was an error reading the file ". file. " !")
+	return
+    finally
+	call <sid>Mes(s:msg)
+	call <sid>LocalSettings(0, a:readflag)
+    endtry
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
 	let file = 'sudo:' . fnamemodify(file, ':p')
-    endif
-    if v:shell_error
-	echoerr "Error " . ( a:readflag ? "reading " : "writing to " ) .
-		\ file . "! Password wrong?"
     endif
     if s:use_sudo_protocol_handler ||
 	    \ empty(expand("%")) ||
@@ -253,11 +256,23 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	exe ':sil f ' . file
 	filetype detect
     endif
+    call <sid>Mes(s:msg)
+endfu
+
+fu! <sid>Mes(msg) "{{{2
     if !empty(s:msg)
 	redr!
-	echo s:msg
-	let s:msg = ""
+    else
+	return
     endif
+    for mess in a:msg
+	echom mess
+    endif
+endfu
+
+fu! <sid>Exception(msg) "{{{2
+    echoerr v:errmsg
+    echoerr a:msg
 endfu
 
 fu! <sid>CheckNetrwFile(file) "{{{2
