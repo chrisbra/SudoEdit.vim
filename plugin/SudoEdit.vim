@@ -39,6 +39,7 @@ func! <sid>ExpandFiles(A, L, P) "{{{
     endif
     call filter(res, '!empty(v:val)')
     call filter(res, 'v:val =~ pat')
+    call map(res, 'isdirectory(v:val) ? v:val.''/'':v:val')
     if a:A =~ '^s\%[udo:]'
       call map(res, '''sudo:''.v:val')
     endif
