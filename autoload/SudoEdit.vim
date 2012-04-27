@@ -85,6 +85,7 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		" the password again (Leave the W13 warning)
 		if !has("gui_running") && s:new_file
 		    "sil call <sid>SudoRead(file)
+		    " Be careful, :e! within a BufWriteCmd can crash Vim!
 		    exe "e!" file
 		endif
 		if empty(glob(undofile)) &&
@@ -107,9 +108,10 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		    let perm = system("stat -c '%u:%g' " .
 			    \ shellescape(file, 1))[:-2]
 		    " Make sure, undo file is readable for current user
-		    let cmd  = printf("!%s sh -c 'test -f %s && chown %s -- %s &&",
+		    let cmd  = printf("!%s sh -c 'test -f %s && ".
+				\ "chown %s -- %s && ",
 				\ join(s:AuthTool, ' '), ufile, perm, ufile)
-		    let cmd .= printf(" chmod a+r -- %s 2>/dev/null'", ufile)
+		    let cmd .= printf("chmod a+r -- %s 2>/dev/null'", ufile)
 		    if has("gui_running")
 			call <sid>echoWarn("Enter password again for".
 			    \ " setting permissions of the undofile")
@@ -140,14 +142,14 @@ fu! <sid>echoWarn(mess) "{{{2
 endfu
 
 fu! <sid>SudoRead(file) "{{{2
-    %d
+    sil %d _
     let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
     if  s:AuthTool[0] =~ '^su$'
         let cmd='"' . cmd . '" --'
     endif
     let cmd=':0r! ' . join(s:AuthTool, ' ') . cmd
     call <sid>Exec(cmd)
-    $d 
+    sil $d _
     " Force reading undofile, if one exists
     if filereadable(undofile(a:file))
 	exe "sil rundo" escape(undofile(a:file), '%')
@@ -168,7 +170,7 @@ fu! <sid>SudoWrite(file) range "{{{2
 	let cmd=a:firstline . ',' . a:lastline . 'w !' .
 	    \ join(s:AuthTool, ' ') . cmd
     endif
-    if <sid>CheckNetrwFile(a:file)
+    if <sid>CheckNetrwFile(a:file) && exists(":NetUserPass") == 2
 	let protocol = matchstr(a:file, '^[^:]:')
 	call <sid>echoWarn('Using Netrw for writing')
 	let uid = input(protocol . ' username: ')
@@ -210,7 +212,6 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	let file = substitute(file, '^sudo:', '', '')
     endif
     let file = empty(a:file) ? expand("%") : file
-    "let file = !empty(a:file) ? substitute(a:file, '^sudo:', '', '') : expand("%")
     if empty(file)
 	call <sid>echoWarn("Cannot write file. Please enter filename for writing!")
 	call <sid>LocalSettings(0, 1)
@@ -229,7 +230,8 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	    return
 	endif
 	try
-	    exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite(' . shellescape(file,1) . ')'
+	    exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite('.
+		\ shellescape(file,1) . ')'
 	    let s:msg = <sid>Stats(file)
 	catch /writeError/
 	    let a=v:errmsg
@@ -242,7 +244,7 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	let file = 'sudo:' . fnamemodify(file, ':p')
     endif
     if v:shell_error
-	echoerr "Error " . ( a:readflag ? "reading " : "writing to " )  .
+	echoerr "Error " . ( a:readflag ? "reading " : "writing to " ) .
 		\ file . "! Password wrong?"
     endif
     if s:use_sudo_protocol_handler ||
@@ -256,19 +258,6 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	echo s:msg
 	let s:msg = ""
     endif
-endfu
-
-" Not needed
-fu! <sid>SudoWritePrepare(name, line1, line2) "{{{2
-    let s:oldpos = winsaveview()
-    let name=a:name
-    if empty(name)
-	let name='""'
-    endif
-    let cmd = printf("%d,%dcall SudoEdit#SudoDo(0, %s)",
-		\ a:line1, a:line2, name)
-    exe cmd
-    call winrestview(s:oldpos)
 endfu
 
 fu! <sid>CheckNetrwFile(file) "{{{2
