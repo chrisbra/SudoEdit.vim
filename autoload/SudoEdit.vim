@@ -15,41 +15,44 @@ fu! <sid>Init() "{{{2
 " (e.g. you could use ssh)
 " You can specify one in your .vimrc using the
 " global variable g:sudoAuth
-    let s:sudoAuth=" sudo su "
-    if has("mac") || has("macunix")
-	let s:sudoAuth = "security" . s:sudoAuth
-    endif
-    if exists("g:sudoAuth")
-	let s:sudoAuth = g:sudoAuth . s:sudoAuth
-    endif
+    if !exists("s:AuthTool")
+	let s:sudoAuth=" sudo su "
+	if has("mac") || has("macunix")
+	    let s:sudoAuth = "security" . s:sudoAuth
+	endif
+	if exists("g:sudoAuth")
+	    let s:sudoAuth = g:sudoAuth . s:sudoAuth
+	endif
 
-" Specify the parameter to use for the auth tool e.g. su uses "-c", but
-" for su, it will be autodetected, sudo does not need one, for ssh use 
-" "root@localhost"
-"
-" You can also use this parameter if you do not want to become root 
-" but any other user
-"
-" You can specify this parameter in your .vimrc using the
-" global variable g:sudoAuthArg
-    if !exists("g:sudoAuthArg")
-	let s:sudoAuthArg=""
-    else
-	let s:sudoAuthArg=g:sudoAuthArg
-    endif
+    " Specify the parameter to use for the auth tool e.g. su uses "-c", but
+    " for su, it will be autodetected, sudo does not need one, for ssh use 
+    " "root@localhost"
+    "
+    " You can also use this parameter if you do not want to become root 
+    " but any other user
+    "
+    " You can specify this parameter in your .vimrc using the
+    " global variable g:sudoAuthArg
+	if !exists("g:sudoAuthArg")
+	    let s:sudoAuthArg=""
+	else
+	    let s:sudoAuthArg=g:sudoAuthArg
+	endif
 
-    let s:AuthTool = <sid>CheckAuthTool(split(s:sudoAuth, '\s'))
-    if empty(s:AuthTool)
-	finish
-    endif
+	let s:AuthTool = <sid>CheckAuthTool(split(s:sudoAuth, '\s'))
+	if empty(s:AuthTool)
+	    call <sid>echoWarn("No authentication tool found, aborting!")
+	    finish
+	endif
 
-    if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
-	let s:sudoAuthArg="-c"
-    elseif s:AuthTool[0] == "security" && empty(s:sudoAuthArg)
-	let s:sudoAuthArg="execute-with-privileges"
+	if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
+	    let s:sudoAuthArg="-c"
+	elseif s:AuthTool[0] == "security" && empty(s:sudoAuthArg)
+	    let s:sudoAuthArg="execute-with-privileges"
+	endif
+	call <sid>SudoAskPasswd()
+	call add(s:AuthTool, s:sudoAuthArg . " ")
     endif
-    call <sid>SudoAskPasswd()
-    call add(s:AuthTool, s:sudoAuthArg . " ")
     " Stack of messages
     let s:msg=''
 endfu
@@ -274,6 +277,7 @@ endfu
 
 fu! <sid>SudoAskPasswd() "{{{2
     if s:AuthTool[0] != 'sudo' ||
+	\ s:AuthTool[0] =~ 'SUDO_ASKPASS' ||
 	\ ( exists("g:sudo_no_gui") && g:sudo_no_gui == 1) ||
 	\ !has("unix") ||
 	\ !exists("$DISPLAY")
