@@ -193,7 +193,12 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 	    - in graphical Vim, display messages, so one knows, that one needs
 	      to enter the password (reported by Rob Shinn, thanks!)
 	    - Allow bang attribute to |SudoRead| and |SudoWrite|
-	    - Make use of graphical dialogs to read the passwords.
+	    - Make use of graphical dialogs for sudo to read the passwords, if
+	      possible
+	    - Better debugging
+	    - Code cleanup
+	    - better filename completion with :SudoRead/SudoWrite (now also
+	      supports completing sudo: protocol handler)
 	0.12: Jan 31, 2012 "{{{1
 	    - Avoid redraw when changing permissions of the undofile
 	    - Don't move cursor on Reading/Writing
