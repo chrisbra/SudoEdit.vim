@@ -2,15 +2,15 @@
 UseVimball
 finish
 autoload/SudoEdit.vim	[[[1
-280
+334
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.12
+" Version:  0.13
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Tue, 31 Jan 2012 22:00:48 +0100
+" Last Change: Sat, 28 Apr 2012 13:26:32 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 12 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 13 :AutoInstall: SudoEdit.vim
 
 " Functions: "{{{1
 
@@ -20,50 +20,63 @@ fu! <sid>Init() "{{{2
 " (e.g. you could use ssh)
 " You can specify one in your .vimrc using the
 " global variable g:sudoAuth
-    let s:sudoAuth=" sudo su "
-    if exists("g:sudoAuth")
-	let s:sudoAuth = g:sudoAuth . s:sudoAuth
-    endif
+    if !exists("s:AuthTool")
+	let s:sudoAuth=" sudo su "
+	if has("mac") || has("macunix")
+	    let s:sudoAuth = "security" . s:sudoAuth
+	endif
+	if exists("g:sudoAuth")
+	    let s:sudoAuth = g:sudoAuth . s:sudoAuth
+	endif
 
-" Specify the parameter to use for the auth tool e.g. su uses "-c", but
-" for su, it will be autodetected, sudo does not need one, for ssh use 
-" "root@localhost"
-"
-" You can also use this parameter if you do not want to become root 
-" but any other user
-"
-" You can specify this parameter in your .vimrc using the
-" global variable g:sudoAuthArg
-    if !exists("g:sudoAuthArg")
-	let s:sudoAuthArg=""
-    else
-	let s:sudoAuthArg=g:sudoAuthArg
-    endif
+    " Specify the parameter to use for the auth tool e.g. su uses "-c", but
+    " for su, it will be autodetected, sudo does not need one, for ssh use 
+    " "root@localhost"
+    "
+    " You can also use this parameter if you do not want to become root 
+    " but any other user
+    "
+    " You can specify this parameter in your .vimrc using the
+    " global variable g:sudoAuthArg
+	if !exists("g:sudoAuthArg")
+	    let s:sudoAuthArg=""
+	else
+	    let s:sudoAuthArg=g:sudoAuthArg
+	endif
 
-    let s:AuthTool=SudoEdit#CheckAuthTool(split(s:sudoAuth, '\s'))
-    if empty(s:AuthTool)
-	finish
-    endif
+	let s:AuthTool = <sid>CheckAuthTool(split(s:sudoAuth, '\s'))
+	if empty(s:AuthTool)
+	    call <sid>echoWarn("No authentication tool found, aborting!")
+	    finish
+	endif
 
-    if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
-	let s:sudoAuthArg="-c"
+	if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
+	    let s:sudoAuthArg="-c"
+	elseif s:AuthTool[0] == "security" && empty(s:sudoAuthArg)
+	    let s:sudoAuthArg="execute-with-privileges"
+	endif
+	call <sid>SudoAskPasswd()
+	call add(s:AuthTool, s:sudoAuthArg . " ")
     endif
-    call add(s:AuthTool, s:sudoAuthArg . " ")
     " Stack of messages
-    let s:msg=''
+    let s:msg = []
 endfu
 
-fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
+fu! <sid>LocalSettings(setflag, readflag) "{{{2
     if a:setflag
 	" Set shellrediraction temporarily
 	" This is used to get su working right!
 	let s:o_srr = &srr
+	" avoid W11 warning
+	let s:o_ar  = &l:ar
 	let &srr = '>'
+	setl ar
 	call <sid>Init()
     else
 	" Reset old settings
 	" shellredirection
-	let &srr = s:o_srr
+	let &srr  = s:o_srr
+	let &l:ar = s:o_ar
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
 	let file=substitute(expand("%"), '^sudo:', '', '')
@@ -75,40 +88,39 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
 		" Force reading in the buffer to avoid stupid W13 warning
 		" don't do this in GUI mode, so one does not have to enter
 		" the password again (Leave the W13 warning)
-		if !has("gui_running")
-		    sil call SudoEdit#SudoRead(file)
+		if !has("gui_running") && s:new_file
+		    "sil call <sid>SudoRead(file)
+		    " Be careful, :e! within a BufWriteCmd can crash Vim!
+		    exe "e!" file
 		endif
 		if empty(glob(undofile)) &&
 		    \ &undodir =~ '^\.\($\|,\)'
 		    " Can't create undofile
-		    let s:msg = "Can't create undofile in current " .
-			\ "directory, skipping writing undofiles!"
+		    call add(s:msg, "Can't create undofile in current " .
+			\ "directory, skipping writing undofiles!")
 		    return
 		endif
-		try
-		    exe "sil wundo!" fnameescape(undofile(file))
-		catch
+		call <sid>Exec("wundo! ". fnameescape(undofile(file)))
+		if empty(glob(fnameescape(undofile(file))))
 		    " Writing undofile not possible 
-		    let s:msg = "Error occured, when writing undofile" .
-			\ v:exception
+		    call add(s:msg,  "Error occured, when writing undofile" .
+			\ v:exception)
 		    return
-		endtry
+		endif
 		if (has("unix") || has("macunix")) && !empty(undofile)
+		    let ufile = string(shellescape(undofile, 1))
 		    let perm = system("stat -c '%u:%g' " .
 			    \ shellescape(file, 1))[:-2]
-		    let cmd   = has('gui_running') ? '' : 'sil'
-		    let cmd  .= '!' . join(s:AuthTool, ' ').
-				\ ' sh -c "chown '.
-				\ perm. ' -- '. shellescape(undofile,1) .
-				\ ' && '
 		    " Make sure, undo file is readable for current user
-		    let cmd  .= ' chmod a+r -- '. shellescape(undofile,1).
-				\ '" 2>/dev/null'
+		    let cmd  = printf("!%s sh -c 'test -f %s && ".
+				\ "chown %s -- %s && ",
+				\ join(s:AuthTool, ' '), ufile, perm, ufile)
+		    let cmd .= printf("chmod a+r -- %s 2>/dev/null'", ufile)
 		    if has("gui_running")
-			call SudoEdit#echoWarn("Enter password again for".
+			call <sid>echoWarn("Enter password again for".
 			    \ " setting permissions of the undofile")
 		    endif
-		    exe cmd
+		    call <sid>Exec(cmd)
 		    "call system(cmd)
 		endif
 	    endif
@@ -116,7 +128,7 @@ fu! SudoEdit#LocalSettings(setflag, readflag) "{{{2
     endif
 endfu
 
-fu! SudoEdit#CheckAuthTool(Authlist) "{{{2
+fu! <sid>CheckAuthTool(Authlist) "{{{2
     for tool in a:Authlist
 	if executable(tool)
 	    return [tool]
@@ -127,34 +139,25 @@ fu! SudoEdit#CheckAuthTool(Authlist) "{{{2
     return []
 endfu
 
-fu! SudoEdit#echoWarn(mess) "{{{2
+fu! <sid>echoWarn(mess) "{{{2
     echohl WarningMsg
     echomsg a:mess
     echohl Normal
 endfu
 
-fu! SudoEdit#SudoRead(file) "{{{2
-    %d
-    if !exists("g:sudoDebug")
-	let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
-    else
-	let cmd='cat ' . shellescape(a:file,1) 
-    endif
+fu! <sid>SudoRead(file) "{{{2
+    sil %d _
+    let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
     if  s:AuthTool[0] =~ '^su$'
         let cmd='"' . cmd . '" --'
     endif
     let cmd=':0r! ' . join(s:AuthTool, ' ') . cmd
-    if exists("g:sudoDebug") && g:sudoDebug
-	call SudoEdit#echoWarn(cmd)
-	exe cmd
-    else
-	if has("gui_running")
-	    exe cmd
-	else
-	    silent! exe cmd
-	endif
+    call <sid>Exec(cmd)
+    if v:shell_error
+	echoerr "Error reading ". a:file . "! Password wrong?"
+	throw /sudo:readError/
     endif
-    $d 
+    sil $d _
     " Force reading undofile, if one exists
     if filereadable(undofile(a:file))
 	exe "sil rundo" escape(undofile(a:file), '%')
@@ -163,7 +166,7 @@ fu! SudoEdit#SudoRead(file) "{{{2
     set nomod
 endfu
 
-fu! SudoEdit#SudoWrite(file) range "{{{2
+fu! <sid>SudoWrite(file) range "{{{2
     if  s:AuthTool[0] =~ '^su$'
 	" Workaround since su cannot be run with :w !
 	let tmpfile = tempname()
@@ -175,42 +178,41 @@ fu! SudoEdit#SudoWrite(file) range "{{{2
 	let cmd=a:firstline . ',' . a:lastline . 'w !' .
 	    \ join(s:AuthTool, ' ') . cmd
     endif
-    if <sid>CheckNetrwFile(a:file)
+    if <sid>CheckNetrwFile(a:file) && exists(":NetUserPass") == 2
 	let protocol = matchstr(a:file, '^[^:]:')
-	call SudoEdit#echoWarn('Using Netrw for writing')
+	call <sid>echoWarn('Using Netrw for writing')
 	let uid = input(protocol . ' username: ')
 	let passwd = inputsecret('password: ')
 	call NetUserPass(uid, passwd)
 	" Write using Netrw
 	w
     else
-	if exists("g:sudoDebug") && g:sudoDebug
-	    call SudoEdit#echoWarn(cmd)
-	    exe cmd
-	else
-	    if has("gui_running")
-		exe cmd
-	    else
-		silent exe cmd
-	    endif
+	let s:new_file = 0
+	if empty(glob(a:file))
+	    let s:new_file = 1
 	endif
+	call <sid>Exec(cmd)
     endif
     if v:shell_error
 	if exists("g:sudoDebug") && g:sudoDebug
-	    call SudoEdit#echoWarn(v:shell_error)
+	    call <sid>echoWarn(v:shell_error)
 	endif
-	throw "writeError"
+	throw "sudo:writeError"
+    endif
+    " Write successful
+    if &mod
+	setl nomod
     endif
 endfu
 
-fu! SudoEdit#Stats(file) "{{{2
+fu! <sid>Stats(file) "{{{2
     ":w echoes a string like this by default:
     ""SudoEdit.vim" 108L, 2595C geschrieben
     return '"' . a:file . '" ' . line('$') . 'L, ' . getfsize(expand(a:file)) . 'C written'
 endfu
 
 fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
-    call SudoEdit#LocalSettings(1, 1)
+    call <sid>LocalSettings(1, 1)
     let s:use_sudo_protocol_handler = 0
     let file = a:file
     if file =~ '^sudo:'
@@ -218,77 +220,129 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	let file = substitute(file, '^sudo:', '', '')
     endif
     let file = empty(a:file) ? expand("%") : file
-    "let file = !empty(a:file) ? substitute(a:file, '^sudo:', '', '') : expand("%")
     if empty(file)
-	call SudoEdit#echoWarn("Cannot write file. Please enter filename for writing!")
-	call SudoEdit#LocalSettings(0, 1)
+	call <sid>echoWarn("Cannot write file. Please enter filename for writing!")
+	call <sid>LocalSettings(0, 1)
 	return
     endif
-    if a:readflag
-	if !&mod || !empty(a:force)
-	    call SudoEdit#SudoRead(file)
+    try
+	if a:readflag
+	    if !&mod || !empty(a:force)
+		call <sid>SudoRead(file)
+	    else
+		call <sid>echoWarn("Buffer modified, not reloading!")
+		return
+	    endif
 	else
-	    call SudoEdit#echoWarn("Buffer modified, not reloading!")
-	    return
+	    if !&mod && !empty(a:force)
+		call <sid>echoWarn("Buffer not modified, not writing!")
+		return
+	    endif
+	    exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite('.
+		\ shellescape(file,1) . ')'
+	    call add(s:msg, <sid>Stats(file))
 	endif
-    else
-	if !&mod && !empty(a:force)
-	    call SudoEdit#echoWarn("Buffer not modified, not writing!")
-	    return
-	endif
-	try
-	    exe a:firstline . ',' . a:lastline . 'call SudoEdit#SudoWrite(' . shellescape(file,1) . ')'
-	    let s:msg = SudoEdit#Stats(file)
-	catch /writeError/
-	    let a=v:errmsg
-	    echoerr "There was an error writing the file!"
-	    echoerr a
-	endtry
-    endif
-    call SudoEdit#LocalSettings(0, a:readflag)
+    catch /sudo:writeError/
+	call <sid>Exception("There was an error writing the file!")
+	return
+    catch /sudo:readError/
+	call <sid>Exception("There was an error reading the file ". file. " !")
+	return
+    finally
+	call <sid>Mes(s:msg)
+	call <sid>LocalSettings(0, a:readflag)
+    endtry
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
 	let file = 'sudo:' . fnamemodify(file, ':p')
     endif
-    if v:shell_error
-	echoerr "Error " . ( a:readflag ? "reading " : "writing to " )  .
-		\ file . "! Password wrong?"
+    if s:use_sudo_protocol_handler ||
+	    \ empty(expand("%")) ||
+	    \ file != expand("%")
+	exe ':sil f ' . file
+	filetype detect
     endif
-    " Write successfull
-    if &mod
-	setl nomod
-    endif
-    exe ':sil f ' . file
+    call <sid>Mes(s:msg)
+endfu
+
+fu! <sid>Mes(msg) "{{{2
     if !empty(s:msg)
-	"redr!
-	echo s:msg
-	let s:msg = ""
+	redr!
+    else
+	return
+    endif
+    for mess in a:msg
+	echom mess
     endif
 endfu
 
-" Not needed
-fu! SudoEdit#SudoWritePrepare(name, line1, line2) "{{{2
-    let s:oldpos = winsaveview()
-    let name=a:name
-    if empty(name)
-	let name='""'
-    endif
-    let cmd = printf("%d,%dcall SudoEdit#SudoDo(0, %s)",
-		\ a:line1, a:line2, name)
-    exe cmd
-    call winrestview(s:oldpos)
+fu! <sid>Exception(msg) "{{{2
+    echoerr v:errmsg
+    echoerr a:msg
 endfu
 
 fu! <sid>CheckNetrwFile(file) "{{{2
     return a:file =~ '^\%(dav\|fetch\|ftp\|http\|rcp\|rsync\|scp\|sftp\):'
 endfu
+
+fu! <sid>SudoAskPasswd() "{{{2
+    if s:AuthTool[0] != 'sudo' ||
+	\ s:AuthTool[0] =~ 'SUDO_ASKPASS' ||
+	\ ( exists("g:sudo_no_gui") && g:sudo_no_gui == 1) ||
+	\ !has("unix") ||
+	\ !exists("$DISPLAY")
+	return
+    endif
+
+    let askpwd = ["/usr/lib/openssh/gnome-ssh-askpass",
+		\ "/usr/bin/ksshaskpass",
+		\ "/usr/lib/ssh/x11-ssh-askpass" ]
+    if exists("g:sudo_askpass")
+	let askpwd = insert(askpw, g:sudo_askpass, 0)
+    endif
+    let sudo_arg = '-A'
+    let sudo_askpass = expand("$SUDO_ASKPASS")
+    if sudo_askpass != "$SUDO_ASKPASS"
+	let list = [ sudo_askpass ] + askpwd
+    else
+	let list = askpwd
+    endif
+    for item in list
+	if executable(item)
+	    " give environment value to sudo, so -A knows
+	    " which program to call
+	    if (s:AuthTool[0] !~ 'SUDO_ASKPASS')
+		call insert(s:AuthTool, 'SUDO_ASKPASS='.shellescape(item,1), 0)
+		call add(s:AuthTool, '-A')
+	    endif
+	endif
+    endfor
+endfu
+
+fu! <sid>Exec(cmd) "{{{2
+    let cmd = a:cmd
+    if exists("g:sudoDebug") && g:sudoDebug
+	let cmd = substitute(a:cmd, '2>/dev/null', '', 'g')
+	let cmd = 'verb '. cmd
+	call <sid>echoWarn(cmd)
+	exe cmd
+	" Allow the user to read messages
+	sleep 3
+    else
+	if has("gui_running")
+	    exe cmd
+	else
+	    silent exe cmd
+	endif
+    endif
+endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 :  }}}
 doc/SudoEdit.txt	[[[1
-236
+266
 *SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.12 Tue, 31 Jan 2012 22:00:48 +0100
+Version: Vers 0.13 Sat, 28 Apr 2012 13:26:32 +0200
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -325,22 +379,27 @@ will fall back and try to use su. Note, that you might have to configure these
 tools, before they can use them successfully.
 
 SudoEdit requires at least a Vim Version 7 with patch 111 installed. Patch 111
-introduced the |shellescape()| functionality.
+introduced the |shellescape()| functionality. On a Mac (using MacVim), it uses
+the command "security execute-with-privileges" to query for your password, on
+Unix, it can make use of graphical password dialog tools like
+ssh-gnome-askpass (see |g:sudo_askpass|)
 
 The SudoEdit Plugin provides 2 Commands:
 
 ==============================================================================
 2.1 SudoRead							 *SudoRead*
 
-	:SudoRead [file]
+	:SudoRead[!] [file]
 
 SudoRead will read the given file name using any of the configured methods for
-superuser authtication. It basically does something like this:
+superuser authtication. It basically does something like this: >
 
-:r !sudo cat file
+    :r !sudo cat file
 
 If no filename is given, SudoRead will try to reread the current file name.
-If the current buffer does not contain any file, it will abort.
+If the current buffer does not contain any file, it will abort. If the !
+argument is used, the current buffer contents will be discarded, if it was
+modified.
 
 SudoRead provides file completion, so you can use <Tab> on the commandline to
 specify the file to read.
@@ -353,18 +412,19 @@ filename completion)
 ==============================================================================
 2.2 SudoWrite							 *SudoWrite*
 
-	:[range]SudoWrite [file]
+	:[range]SudoWrite[!] [file]
 
 SudoWrite will write the given file using any of the configured methods for
-superuser authtication. It basically does something like this:
+superuser authtication. It basically does something like this: >
 
-:w !sudo tee >/dev/null file
+    :w !sudo tee >/dev/null file
 
 If no filename is given, SudoWrite will try to write the current file name.
 If the current buffer does not contain any file, it will abort.
 
 You can specify a range to write just like |:w|. If no range is given, it will
-write the whole file.
+write the whole file. If the bang argument is not given, the buffer will only
+be written, if it was modified.
 
 Again, you can use the protocol handler sudo: for writing.
 
@@ -383,10 +443,10 @@ g:sudoAuth. If this variable exists, SudoEdit will first try to use the
 specified tool before falling back to either sudo or su (in that order).
 
 For example, you could use ssh to use as authentication tool by setting
-g:sudoAuth in your .vimrc as follows:
+g:sudoAuth in your .vimrc as follows: >
 
-let g:sudoAuth="ssh"
-
+    let g:sudoAuth="ssh"
+<
 							       *g:sudoAuthArg*
 
 The variable g:sudoAuthArg specifies how to use the given authentication tool.
@@ -395,21 +455,38 @@ also define here which user to change to. By default, SudoEdit will try to
 become the superuser e.g. root. 
 
 If you want to use ssh as authentication facility, you can set g:sudoAuthArg
-as follows in your .vimrc:
+as follows in your .vimrc: >
 
-let g:sudoAuthArg="root@localhost"
+    let g:sudoAuthArg="root@localhost"
 
 For su, you would use g:sudoAuthArg="-c", but you do not have to set it, the
 plugin will automatically use -c if it detects, that su is used.
+
+					    *g:sudo_no_gui* *g:sudo_askpass*
+If the plugin uses sudo for authenticating and the plugin finds any of
+gnome-ssh-askpass, ksshaskpass or x11-ssh-askpass and a graphical Display
+connection is possible, the plugin uses the first of the tools it finds to
+display a graphical dialog, in which you can enter the password. If you like
+to specify a different tool, you can set the g:sudo_askpass variable to
+specify a different tool to use, e.g. >
+
+    :let g:sudo_askpass='/usr/lib/openssh/gnome-ssh-askpass'
+
+to make use of gnome-ssh-askpass for querying the password.
+
+If you like to disable this, set the variable g:sudo_no_gui, e.g. >
+
+    :let g:sudo_no_gui=1
 
 ==============================================================================
 4. SudoEdit Debugging					    *SudoEdit-debug*
 
 You can debug this plugin and the shell code that will be executed by
-setting:
-let g:sudoDebug=1
-This ensures, that debug messages will be appended to the |message-history|.
+setting: >
 
+    let g:sudoDebug=1
+
+This ensures, that debug messages will be appended to the |message-history|.
 
 ==============================================================================
 5. SudoEdit F.A.Q.					    *SudoEdit-faq*
@@ -453,9 +530,16 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
-	(unreleased) "{{{1
+	0.13: Apr 28, 2012 "{{{1
 	    - in graphical Vim, display messages, so one knows, that one needs
 	      to enter the password (reported by Rob Shinn, thanks!)
+	    - Allow bang attribute to |SudoRead| and |SudoWrite|
+	    - Make use of graphical dialogs for sudo to read the passwords, if
+	      possible
+	    - Better debugging
+	    - Code cleanup
+	    - better filename completion with :SudoRead/SudoWrite (now also
+	      supports completing sudo: protocol handler)
 	0.12: Jan 31, 2012 "{{{1
 	    - Avoid redraw when changing permissions of the undofile
 	    - Don't move cursor on Reading/Writing
@@ -522,15 +606,15 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 Modeline: "{{{1
 vim:tw=78:ts=8:ft=help:fdm=marker:fdl=0:norl
 plugin/SudoEdit.vim	[[[1
-56
+83
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.12
+" Version:  0.13
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Tue, 31 Jan 2012 22:00:48 +0100
+" Last Change: Sat, 28 Apr 2012 13:26:32 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 12 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 13 :AutoInstall: SudoEdit.vim
 " Documentation: see :h SudoEdit.txt
 
 " ---------------------------------------------------------------------
@@ -548,16 +632,43 @@ if v:version < 700 || ( v:version == 700 && !has("patch111"))
 endif
 
 " ---------------------------------------------------------------------
+" Functions {{{1
+func! <sid>ExpandFiles(A, L, P) "{{{
+  if a:A =~ '^s\%[udo:]$'
+    return [ "sudo:" ]
+  endif
+  let pat = matchstr(a:A, '^\(s\%[udo:]\)\?\zs.*')
+  let gpat = (pat[0] =~ '[./]' ? pat : '/'.pat). '*'
+  if !empty(pat)
+    " Patch 7.3.465 introduced the list parameter to glob()
+    if v:version > 703 || (v:version == 703 && has('patch465'))
+      let res = glob(gpat, 1, 1)
+    else
+      let res = split(glob(gpat, 1),"\n")
+    endif
+    call filter(res, '!empty(v:val)')
+    call filter(res, 'v:val =~ pat')
+    call map(res, 'isdirectory(v:val) ? v:val.''/'':v:val')
+    if a:A =~ '^s\%[udo:]'
+      call map(res, '''sudo:''.v:val')
+    endif
+    return res
+  else
+    return ''
+  endif
+endfu
+
+" ---------------------------------------------------------------------
 " Public Interface {{{1
 " Define User-Commands and Autocommand "{{{
 "
 " Dirty hack, to make winsaveview work, ugly but works.
 " because functions with range argument reset the cursor position!
-com! -complete=file -bang -range=% -nargs=? SudoWrite
+com! -complete=customlist,<sid>ExpandFiles -bang -range=% -nargs=? SudoWrite
       \ :let s:a=winsaveview()|
       \ :<line1>,<line2>call SudoEdit#SudoDo(0, <q-bang>, <q-args>)|
       \ call winrestview(s:a)
-com! -complete=file -bang -nargs=? SudoRead
+com! -complete=customlist,<sid>ExpandFiles -bang -nargs=? SudoRead
       \ :let s:a=winsaveview()|
       \ :call SudoEdit#SudoDo(1, <q-bang>, <q-args>) |
       \ call winrestview(s:a)
