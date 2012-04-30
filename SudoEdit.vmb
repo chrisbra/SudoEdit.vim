@@ -5,12 +5,12 @@ autoload/SudoEdit.vim	[[[1
 334
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.13
+" Version:  0.14
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Sat, 28 Apr 2012 13:26:32 +0200
+" Last Change: Mon, 30 Apr 2012 16:03:44 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 13 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 14 :AutoInstall: SudoEdit.vim
 
 " Functions: "{{{1
 
@@ -214,7 +214,7 @@ endfu
 fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     call <sid>LocalSettings(1, 1)
     let s:use_sudo_protocol_handler = 0
-    let file = a:file
+    let file = expand(a:file)
     if file =~ '^sudo:'
 	let s:use_sudo_protocol_handler = 1
 	let file = substitute(file, '^sudo:', '', '')
@@ -338,11 +338,11 @@ endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 :  }}}
 doc/SudoEdit.txt	[[[1
-266
+270
 *SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.13 Sat, 28 Apr 2012 13:26:32 +0200
+Version: Vers 0.14 Mon, 30 Apr 2012 16:03:44 +0200
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -530,6 +530,10 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.14: Apr 30, 2012 "{{{1
+	    - fix issue #15
+	      (https://github.com/chrisbra/SudoEdit.vim/issues/15
+	      reported by Lenin Lee, thanks!)
 	0.13: Apr 28, 2012 "{{{1
 	    - in graphical Vim, display messages, so one knows, that one needs
 	      to enter the password (reported by Rob Shinn, thanks!)
@@ -609,12 +613,12 @@ plugin/SudoEdit.vim	[[[1
 83
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.13
+" Version:  0.14
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Sat, 28 Apr 2012 13:26:32 +0200
+" Last Change: Mon, 30 Apr 2012 16:03:44 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 13 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 14 :AutoInstall: SudoEdit.vim
 " Documentation: see :h SudoEdit.txt
 
 " ---------------------------------------------------------------------
