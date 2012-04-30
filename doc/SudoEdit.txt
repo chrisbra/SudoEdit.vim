@@ -189,6 +189,10 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.14: Apr 30, 2012 "{{{1
+	    - fix issue #15
+	      (https://github.com/chrisbra/SudoEdit.vim/issues/15
+	      reported by Lenin Lee, thanks!)
 	0.13: Apr 28, 2012 "{{{1
 	    - in graphical Vim, display messages, so one knows, that one needs
 	      to enter the password (reported by Rob Shinn, thanks!)
