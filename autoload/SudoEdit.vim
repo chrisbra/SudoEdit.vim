@@ -209,7 +209,7 @@ endfu
 fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     call <sid>LocalSettings(1, 1)
     let s:use_sudo_protocol_handler = 0
-    let file = a:file
+    let file = expand(a:file)
     if file =~ '^sudo:'
 	let s:use_sudo_protocol_handler = 1
 	let file = substitute(file, '^sudo:', '', '')
