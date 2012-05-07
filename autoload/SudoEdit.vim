@@ -267,7 +267,7 @@ fu! <sid>Mes(msg) "{{{2
     endif
     for mess in a:msg
 	echom mess
-    endif
+    endfor
 endfu
 
 fu! <sid>Exception(msg) "{{{2
