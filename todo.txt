@@ -1,0 +1,1 @@
+- Make the plugin work on Windows and document how to do it.
