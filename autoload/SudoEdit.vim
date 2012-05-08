@@ -71,7 +71,6 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 	" Reset old settings
 	" shellredirection
 	let &srr  = s:o_srr
-	let &l:ar = s:o_ar
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
 	let file=substitute(expand("%"), '^sudo:', '', '')
@@ -120,6 +119,10 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		endif
 	    endif
 	endif
+	" Make sure W11 warning is triggered and consumed by 'ar' setting
+	checktime
+	" Reset autoread option
+	let &l:ar = s:o_ar
     endif
 endfu
 
@@ -239,12 +242,13 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	endif
     catch /sudo:writeError/
 	call <sid>Exception("There was an error writing the file!")
+	call <sid>Mes(s:msg)
 	return
     catch /sudo:readError/
 	call <sid>Exception("There was an error reading the file ". file. " !")
+	call <sid>Mes(s:msg)
 	return
     finally
-	call <sid>Mes(s:msg)
 	call <sid>LocalSettings(0, a:readflag)
     endtry
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
@@ -268,6 +272,7 @@ fu! <sid>Mes(msg) "{{{2
     for mess in a:msg
 	echom mess
     endfor
+    let s:msg=[]
 endfu
 
 fu! <sid>Exception(msg) "{{{2
