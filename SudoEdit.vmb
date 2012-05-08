@@ -5,12 +5,12 @@ autoload/SudoEdit.vim	[[[1
 334
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.14
+" Version:  0.15
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Mon, 30 Apr 2012 16:03:44 +0200
+" Last Change: Tue, 08 May 2012 08:30:52 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 14 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 15 :AutoInstall: SudoEdit.vim
 
 " Functions: "{{{1
 
@@ -272,7 +272,7 @@ fu! <sid>Mes(msg) "{{{2
     endif
     for mess in a:msg
 	echom mess
-    endif
+    endfor
 endfu
 
 fu! <sid>Exception(msg) "{{{2
@@ -338,11 +338,11 @@ endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 :  }}}
 doc/SudoEdit.txt	[[[1
-270
+272
 *SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.14 Mon, 30 Apr 2012 16:03:44 +0200
+Version: Vers 0.15 Tue, 08 May 2012 08:30:52 +0200
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -530,6 +530,8 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.15: May 8, 2012 "{{{1
+	    - fix Syntax error (reported by Gary Johnson, thanks!)
 	0.14: Apr 30, 2012 "{{{1
 	    - fix issue #15
 	      (https://github.com/chrisbra/SudoEdit.vim/issues/15
@@ -613,12 +615,12 @@ plugin/SudoEdit.vim	[[[1
 83
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.14
+" Version:  0.15
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Mon, 30 Apr 2012 16:03:44 +0200
+" Last Change: Tue, 08 May 2012 08:30:52 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 14 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 15 :AutoInstall: SudoEdit.vim
 " Documentation: see :h SudoEdit.txt
 
 " ---------------------------------------------------------------------
