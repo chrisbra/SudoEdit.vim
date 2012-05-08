@@ -13,9 +13,10 @@ Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
 
 	1.  Contents......................................: |SudoEdit-contents|
 	2.  SudoEdit Manual...............................: |SudoEdit-manual|
-	2.1 SudoEdit: SudoRead............................: |SudoRead|
-	2.2 SudoEdit: SudoWrite...........................: |SudoWrite|
+	  1 SudoEdit: SudoRead............................: |SudoRead|
+	  2 SudoEdit: SudoWrite...........................: |SudoWrite|
 	3.  SudoEdit Configuration........................: |SudoEdit-config|
+	  1 SudoEdit on Windows...........................: |SudoEdit-Win|
         4.  SudoEdit Debugging............................: |SudoEdit-debug|
         5.  SudoEdit F.A.Q................................: |SudoEdit-faq|
 	6.  SudoEdit History..............................: |SudoEdit-history|
@@ -122,6 +123,7 @@ For su, you would use g:sudoAuthArg="-c", but you do not have to set it, the
 plugin will automatically use -c if it detects, that su is used.
 
 					    *g:sudo_no_gui* *g:sudo_askpass*
+
 If the plugin uses sudo for authenticating and the plugin finds any of
 gnome-ssh-askpass, ksshaskpass or x11-ssh-askpass and a graphical Display
 connection is possible, the plugin uses the first of the tools it finds to
@@ -136,6 +138,45 @@ to make use of gnome-ssh-askpass for querying the password.
 If you like to disable this, set the variable g:sudo_no_gui, e.g. >
 
     :let g:sudo_no_gui=1
+
+==============================================================================
+3.1 SudoEdit on Windows						 *SudoEdit-Win*
+
+It should be possible to use SudoEdit on Windows using the runas command. The
+plugin should by default try to detect when it runs under Windows and either
+try to use runas or elevate. For this to work, those commands need to be in
+your %PATH% and be executable. For runas, SudoEdit tries to simply run the
+command like this: >
+
+    runas /noprofile /user:Administrator "type file"
+
+while elevate would simply use: >
+    
+    elevate "type file"
+
+This has not yet been tested, but if you have successfully setup SudoEdit on
+Windows, please let me know, so that the procedure can be properly documented.
+
+Alternatively, it should be possible to setup SudoEdit to use the ShellRunAs,
+sudowin or the Surun command and configuring the plugin using the |g:sudoAuth|
+and |g:sudoAuthArg| variables.
+
+For further help on this topic see those links:
+
+runas:
+http://www.microsoft.com/resources/documentation/windows/xp/all/proddocs/en-us/runas.mspx
+
+sudowin:
+http://sourceforge.net/projects/sudowin/
+
+elevate:
+http://technet.microsoft.com/en-us/magazine/2007.06.utilityspotlight.aspx
+
+ShellRunAs:
+http://technet.microsoft.com/en-us/sysinternals/cc300361.aspx
+
+Surun:
+http://kay-bruns.de/wp/software/surun/
 
 ==============================================================================
 4. SudoEdit Debugging					    *SudoEdit-debug*
