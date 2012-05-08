@@ -18,7 +18,9 @@ fu! <sid>Init() "{{{2
     if !exists("s:AuthTool")
 	let s:sudoAuth=" sudo su "
 	if has("mac") || has("macunix")
-	    let s:sudoAuth = "security" . s:sudoAuth
+	    let s:sudoAuth = "security". s:sudoAuth
+	elseif has("gui_win32")
+	    let s:sudoAuth = "runas elevate". s:sudoAuth
 	endif
 	if exists("g:sudoAuth")
 	    let s:sudoAuth = g:sudoAuth . s:sudoAuth
@@ -49,6 +51,8 @@ fu! <sid>Init() "{{{2
 	    let s:sudoAuthArg="-c"
 	elseif s:AuthTool[0] == "security" && empty(s:sudoAuthArg)
 	    let s:sudoAuthArg="execute-with-privileges"
+	elseif s:AuthTool[0] == "runas" && empty(s:sudoAuthArg)
+	    let s:sudoAuthArg = "/noprofile /user:Administrator"
 	endif
 	call <sid>SudoAskPasswd()
 	call add(s:AuthTool, s:sudoAuthArg . " ")
@@ -145,7 +149,11 @@ endfu
 
 fu! <sid>SudoRead(file) "{{{2
     sil %d _
-    let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
+    if has("gui_win32")
+	let cmd='"type '. shellescape(a:file,1). '"'
+    else
+	let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
+    endif
     if  s:AuthTool[0] =~ '^su$'
         let cmd='"' . cmd . '" --'
     endif
@@ -172,7 +180,11 @@ fu! <sid>SudoWrite(file) range "{{{2
 	let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . tmpfile . ' ' .
 	    \ a:file . '" --'
     else
-	let cmd='tee >/dev/null ' . a:file
+	if has("gui_w32")
+	    let cmd='"type >'. shellescape(a:file,1). '"'
+	else
+	    let cmd='tee >/dev/null ' . shellescape(a:file,1)
+	endif
 	let cmd=a:firstline . ',' . a:lastline . 'w !' .
 	    \ join(s:AuthTool, ' ') . cmd
     endif
