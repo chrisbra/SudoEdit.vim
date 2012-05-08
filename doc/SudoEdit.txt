@@ -189,6 +189,8 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.15: May 8, 2012 "{{{1
+	    - fix Syntax error (reported by Gary Johnson, thanks!)
 	0.14: Apr 30, 2012 "{{{1
 	    - fix issue #15
 	      (https://github.com/chrisbra/SudoEdit.vim/issues/15
