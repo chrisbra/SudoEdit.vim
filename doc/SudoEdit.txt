@@ -1,7 +1,7 @@
 *SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.15 Tue, 08 May 2012 08:30:52 +0200
+Version: Vers 0.16 Thu, 17 May 2012 21:17:45 +0200
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -230,6 +230,8 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.16: May 17, 2012 "{{{1
+	    - Make the plugin usable on Windows |SudoEdit-Win|
 	0.15: May 8, 2012 "{{{1
 	    - fix Syntax error (reported by Gary Johnson, thanks!)
 	0.14: Apr 30, 2012 "{{{1

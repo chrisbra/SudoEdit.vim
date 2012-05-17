@@ -2,15 +2,15 @@
 UseVimball
 finish
 autoload/SudoEdit.vim	[[[1
-334
+351
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.15
+" Version:  0.16
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Tue, 08 May 2012 08:30:52 +0200
+" Last Change: Thu, 17 May 2012 21:17:45 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 15 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 16 :AutoInstall: SudoEdit.vim
 
 " Functions: "{{{1
 
@@ -23,7 +23,9 @@ fu! <sid>Init() "{{{2
     if !exists("s:AuthTool")
 	let s:sudoAuth=" sudo su "
 	if has("mac") || has("macunix")
-	    let s:sudoAuth = "security" . s:sudoAuth
+	    let s:sudoAuth = "security". s:sudoAuth
+	elseif has("gui_win32")
+	    let s:sudoAuth = "runas elevate". s:sudoAuth
 	endif
 	if exists("g:sudoAuth")
 	    let s:sudoAuth = g:sudoAuth . s:sudoAuth
@@ -54,6 +56,8 @@ fu! <sid>Init() "{{{2
 	    let s:sudoAuthArg="-c"
 	elseif s:AuthTool[0] == "security" && empty(s:sudoAuthArg)
 	    let s:sudoAuthArg="execute-with-privileges"
+	elseif s:AuthTool[0] == "runas" && empty(s:sudoAuthArg)
+	    let s:sudoAuthArg = "/noprofile /user:Administrator"
 	endif
 	call <sid>SudoAskPasswd()
 	call add(s:AuthTool, s:sudoAuthArg . " ")
@@ -76,7 +80,6 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 	" Reset old settings
 	" shellredirection
 	let &srr  = s:o_srr
-	let &l:ar = s:o_ar
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
 	let file=substitute(expand("%"), '^sudo:', '', '')
@@ -125,6 +128,10 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 		endif
 	    endif
 	endif
+	" Make sure W11 warning is triggered and consumed by 'ar' setting
+	checktime
+	" Reset autoread option
+	let &l:ar = s:o_ar
     endif
 endfu
 
@@ -147,7 +154,11 @@ endfu
 
 fu! <sid>SudoRead(file) "{{{2
     sil %d _
-    let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
+    if has("gui_win32")
+	let cmd='"type '. shellescape(a:file,1). '"'
+    else
+	let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
+    endif
     if  s:AuthTool[0] =~ '^su$'
         let cmd='"' . cmd . '" --'
     endif
@@ -174,7 +185,11 @@ fu! <sid>SudoWrite(file) range "{{{2
 	let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . tmpfile . ' ' .
 	    \ a:file . '" --'
     else
-	let cmd='tee >/dev/null ' . a:file
+	if has("gui_w32")
+	    let cmd='"type >'. shellescape(a:file,1). '"'
+	else
+	    let cmd='tee >/dev/null ' . shellescape(a:file,1)
+	endif
 	let cmd=a:firstline . ',' . a:lastline . 'w !' .
 	    \ join(s:AuthTool, ' ') . cmd
     endif
@@ -244,12 +259,13 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	endif
     catch /sudo:writeError/
 	call <sid>Exception("There was an error writing the file!")
+	call <sid>Mes(s:msg)
 	return
     catch /sudo:readError/
 	call <sid>Exception("There was an error reading the file ". file. " !")
+	call <sid>Mes(s:msg)
 	return
     finally
-	call <sid>Mes(s:msg)
 	call <sid>LocalSettings(0, a:readflag)
     endtry
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
@@ -273,6 +289,7 @@ fu! <sid>Mes(msg) "{{{2
     for mess in a:msg
 	echom mess
     endfor
+    let s:msg=[]
 endfu
 
 fu! <sid>Exception(msg) "{{{2
@@ -338,11 +355,11 @@ endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 :  }}}
 doc/SudoEdit.txt	[[[1
-272
+315
 *SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.15 Tue, 08 May 2012 08:30:52 +0200
+Version: Vers 0.16 Thu, 17 May 2012 21:17:45 +0200
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -354,9 +371,10 @@ Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
 
 	1.  Contents......................................: |SudoEdit-contents|
 	2.  SudoEdit Manual...............................: |SudoEdit-manual|
-	2.1 SudoEdit: SudoRead............................: |SudoRead|
-	2.2 SudoEdit: SudoWrite...........................: |SudoWrite|
+	  1 SudoEdit: SudoRead............................: |SudoRead|
+	  2 SudoEdit: SudoWrite...........................: |SudoWrite|
 	3.  SudoEdit Configuration........................: |SudoEdit-config|
+	  1 SudoEdit on Windows...........................: |SudoEdit-Win|
         4.  SudoEdit Debugging............................: |SudoEdit-debug|
         5.  SudoEdit F.A.Q................................: |SudoEdit-faq|
 	6.  SudoEdit History..............................: |SudoEdit-history|
@@ -463,6 +481,7 @@ For su, you would use g:sudoAuthArg="-c", but you do not have to set it, the
 plugin will automatically use -c if it detects, that su is used.
 
 					    *g:sudo_no_gui* *g:sudo_askpass*
+
 If the plugin uses sudo for authenticating and the plugin finds any of
 gnome-ssh-askpass, ksshaskpass or x11-ssh-askpass and a graphical Display
 connection is possible, the plugin uses the first of the tools it finds to
@@ -477,6 +496,45 @@ to make use of gnome-ssh-askpass for querying the password.
 If you like to disable this, set the variable g:sudo_no_gui, e.g. >
 
     :let g:sudo_no_gui=1
+
+==============================================================================
+3.1 SudoEdit on Windows						 *SudoEdit-Win*
+
+It should be possible to use SudoEdit on Windows using the runas command. The
+plugin should by default try to detect when it runs under Windows and either
+try to use runas or elevate. For this to work, those commands need to be in
+your %PATH% and be executable. For runas, SudoEdit tries to simply run the
+command like this: >
+
+    runas /noprofile /user:Administrator "type file"
+
+while elevate would simply use: >
+    
+    elevate "type file"
+
+This has not yet been tested, but if you have successfully setup SudoEdit on
+Windows, please let me know, so that the procedure can be properly documented.
+
+Alternatively, it should be possible to setup SudoEdit to use the ShellRunAs,
+sudowin or the Surun command and configuring the plugin using the |g:sudoAuth|
+and |g:sudoAuthArg| variables.
+
+For further help on this topic see those links:
+
+runas:
+http://www.microsoft.com/resources/documentation/windows/xp/all/proddocs/en-us/runas.mspx
+
+sudowin:
+http://sourceforge.net/projects/sudowin/
+
+elevate:
+http://technet.microsoft.com/en-us/magazine/2007.06.utilityspotlight.aspx
+
+ShellRunAs:
+http://technet.microsoft.com/en-us/sysinternals/cc300361.aspx
+
+Surun:
+http://kay-bruns.de/wp/software/surun/
 
 ==============================================================================
 4. SudoEdit Debugging					    *SudoEdit-debug*
@@ -530,6 +588,8 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.16: May 17, 2012 "{{{1
+	    - Make the plugin usable on Windows |SudoEdit-Win|
 	0.15: May 8, 2012 "{{{1
 	    - fix Syntax error (reported by Gary Johnson, thanks!)
 	0.14: Apr 30, 2012 "{{{1
@@ -615,12 +675,12 @@ plugin/SudoEdit.vim	[[[1
 83
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.15
+" Version:  0.16
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Tue, 08 May 2012 08:30:52 +0200
+" Last Change: Thu, 17 May 2012 21:17:45 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 15 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 16 :AutoInstall: SudoEdit.vim
 " Documentation: see :h SudoEdit.txt
 
 " ---------------------------------------------------------------------
