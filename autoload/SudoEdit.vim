@@ -78,51 +78,53 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
 	let file=substitute(expand("%"), '^sudo:', '', '')
-	let undofile = undofile(file)
-	if has("persistent_undo") && !empty(file) &&
-	    \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
-	    \ &l:udf
-	    if !a:readflag
-		" Force reading in the buffer to avoid stupid W13 warning
-		" don't do this in GUI mode, so one does not have to enter
-		" the password again (Leave the W13 warning)
-		if !has("gui_running") && s:new_file
-		    "sil call <sid>SudoRead(file)
-		    " Be careful, :e! within a BufWriteCmd can crash Vim!
-		    exe "e!" file
-		endif
-		if empty(glob(undofile)) &&
-		    \ &undodir =~ '^\.\($\|,\)'
-		    " Can't create undofile
-		    call add(s:msg, "Can't create undofile in current " .
-			\ "directory, skipping writing undofiles!")
-		    return
-		endif
-		call <sid>Exec("wundo! ". fnameescape(undofile(file)))
-		if empty(glob(fnameescape(undofile(file))))
-		    " Writing undofile not possible 
-		    call add(s:msg,  "Error occured, when writing undofile" .
-			\ v:exception)
-		    return
-		endif
-		if (has("unix") || has("macunix")) && !empty(undofile)
-		    let ufile = string(shellescape(undofile, 1))
-		    let perm = system("stat -c '%u:%g' " .
-			    \ shellescape(file, 1))[:-2]
-		    " Make sure, undo file is readable for current user
-		    let cmd  = printf("!%s sh -c 'test -f %s && ".
-				\ "chown %s -- %s && ",
-				\ join(s:AuthTool, ' '), ufile, perm, ufile)
-		    let cmd .= printf("chmod a+r -- %s 2>/dev/null'", ufile)
-		    if has("gui_running")
-			call <sid>echoWarn("Enter password again for".
-			    \ " setting permissions of the undofile")
+	if has("persistent_undo")
+	    let undofile = undofile(file)
+	    if !empty(file) &&
+		\!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
+		\ &l:udf
+		if !a:readflag
+		    " Force reading in the buffer to avoid stupid W13 warning
+		    " don't do this in GUI mode, so one does not have to enter
+		    " the password again (Leave the W13 warning)
+		    if !has("gui_running") && s:new_file
+			"sil call <sid>SudoRead(file)
+			" Be careful, :e! within a BufWriteCmd can crash Vim!
+			exe "e!" file
 		    endif
-		    call <sid>Exec(cmd)
-		    "call system(cmd)
+		    if empty(glob(undofile)) &&
+			\ &undodir =~ '^\.\($\|,\)'
+			" Can't create undofile
+			call add(s:msg, "Can't create undofile in current " .
+			    \ "directory, skipping writing undofiles!")
+			return
+		    endif
+		    call <sid>Exec("wundo! ". fnameescape(undofile(file)))
+		    if empty(glob(fnameescape(undofile(file))))
+			" Writing undofile not possible 
+			call add(s:msg,  "Error occured, when writing undofile" .
+			    \ v:exception)
+			return
+		    endif
+		    if (has("unix") || has("macunix")) && !empty(undofile)
+			let ufile = string(shellescape(undofile, 1))
+			let perm = system("stat -c '%u:%g' " .
+				\ shellescape(file, 1))[:-2]
+			" Make sure, undo file is readable for current user
+			let cmd  = printf("!%s sh -c 'test -f %s && ".
+				    \ "chown %s -- %s && ",
+				    \ join(s:AuthTool, ' '), ufile, perm, ufile)
+			let cmd .= printf("chmod a+r -- %s 2>/dev/null'", ufile)
+			if has("gui_running")
+			    call <sid>echoWarn("Enter password again for".
+				\ " setting permissions of the undofile")
+			endif
+			call <sid>Exec(cmd)
+			"call system(cmd)
+		    endif
 		endif
 	    endif
-	endif
+	endif " has("persistent_undo")
 	" Make sure W11 warning is triggered and consumed by 'ar' setting
 	checktime
 	" Reset autoread option
@@ -164,9 +166,11 @@ fu! <sid>SudoRead(file) "{{{2
 	throw /sudo:readError/
     endif
     sil $d _
-    " Force reading undofile, if one exists
-    if filereadable(undofile(a:file))
-	exe "sil rundo" escape(undofile(a:file), '%')
+    if has("persistent_undo")
+	" Force reading undofile, if one exists
+	if filereadable(undofile(a:file))
+	    exe "sil rundo" escape(undofile(a:file), '%')
+	endif
     endif
     filetype detect
     set nomod

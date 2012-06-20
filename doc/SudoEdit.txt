@@ -230,6 +230,8 @@ http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.17: (unreleased)
+	    - Guard against a vim without persistent_undo feature
 	0.16: May 17, 2012 "{{{1
 	    - Make the plugin usable on Windows |SudoEdit-Win|
 	0.15: May 8, 2012 "{{{1
