@@ -228,6 +228,18 @@ Write me an email (look in the first line for my mail address). And if you are
 really happy, vote for the plugin and consider looking at my Amazon whishlist:
 http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
+6) Plugin Feedback                                        *SudoEdit-feedback*
+
+Feedback is always welcome. If you like the plugin, please rate it at the
+vim-page:
+http://www.vim.org/scripts/script.php?script_id=2709
+
+You can also follow the development of the plugin at github:
+http://github.com/chrisbra/SudoEdit.vim
+
+Please don't hesitate to report any bugs to the maintainer, mentioned in the
+third line of this document.
+
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
 	0.17: (unreleased)
