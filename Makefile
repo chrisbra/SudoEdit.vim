@@ -25,6 +25,7 @@ install:
 
 release: $(PLUGIN) $(PLUGIN).vmb
 	ln -f $(PLUGIN).vmb $(PLUGIN)-$(VERSION).vmb
+	cp -f $(DOC) README
 
 uninstall:
 	vim -u NONE -N -c':RmVimball ${PLUGIN}.vmb'
