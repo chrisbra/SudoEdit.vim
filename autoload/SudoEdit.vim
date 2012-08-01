@@ -313,7 +313,7 @@ fu! <sid>SudoAskPasswd() "{{{2
 		\ "/usr/bin/ksshaskpass",
 		\ "/usr/lib/ssh/x11-ssh-askpass" ]
     if exists("g:sudo_askpass")
-	let askpwd = insert(askpw, g:sudo_askpass, 0)
+	let askpwd = insert(askpwd, g:sudo_askpass, 0)
     endif
     let sudo_arg = '-A'
     let sudo_askpass = expand("$SUDO_ASKPASS")
