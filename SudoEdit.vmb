@@ -2,15 +2,15 @@
 UseVimball
 finish
 autoload/SudoEdit.vim	[[[1
-351
+355
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.16
+" Version:  0.17
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Thu, 17 May 2012 21:17:45 +0200
+" Last Change: Mon, 20 Aug 2012 19:30:22 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 16 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 17 :AutoInstall: SudoEdit.vim
 
 " Functions: "{{{1
 
@@ -83,51 +83,53 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
 	let file=substitute(expand("%"), '^sudo:', '', '')
-	let undofile = undofile(file)
-	if has("persistent_undo") && !empty(file) &&
-	    \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
-	    \ &l:udf
-	    if !a:readflag
-		" Force reading in the buffer to avoid stupid W13 warning
-		" don't do this in GUI mode, so one does not have to enter
-		" the password again (Leave the W13 warning)
-		if !has("gui_running") && s:new_file
-		    "sil call <sid>SudoRead(file)
-		    " Be careful, :e! within a BufWriteCmd can crash Vim!
-		    exe "e!" file
-		endif
-		if empty(glob(undofile)) &&
-		    \ &undodir =~ '^\.\($\|,\)'
-		    " Can't create undofile
-		    call add(s:msg, "Can't create undofile in current " .
-			\ "directory, skipping writing undofiles!")
-		    return
-		endif
-		call <sid>Exec("wundo! ". fnameescape(undofile(file)))
-		if empty(glob(fnameescape(undofile(file))))
-		    " Writing undofile not possible 
-		    call add(s:msg,  "Error occured, when writing undofile" .
-			\ v:exception)
-		    return
-		endif
-		if (has("unix") || has("macunix")) && !empty(undofile)
-		    let ufile = string(shellescape(undofile, 1))
-		    let perm = system("stat -c '%u:%g' " .
-			    \ shellescape(file, 1))[:-2]
-		    " Make sure, undo file is readable for current user
-		    let cmd  = printf("!%s sh -c 'test -f %s && ".
-				\ "chown %s -- %s && ",
-				\ join(s:AuthTool, ' '), ufile, perm, ufile)
-		    let cmd .= printf("chmod a+r -- %s 2>/dev/null'", ufile)
-		    if has("gui_running")
-			call <sid>echoWarn("Enter password again for".
-			    \ " setting permissions of the undofile")
+	if has("persistent_undo")
+	    let undofile = undofile(file)
+	    if !empty(file) &&
+		\!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
+		\ &l:udf
+		if !a:readflag
+		    " Force reading in the buffer to avoid stupid W13 warning
+		    " don't do this in GUI mode, so one does not have to enter
+		    " the password again (Leave the W13 warning)
+		    if !has("gui_running") && s:new_file
+			"sil call <sid>SudoRead(file)
+			" Be careful, :e! within a BufWriteCmd can crash Vim!
+			exe "e!" file
 		    endif
-		    call <sid>Exec(cmd)
-		    "call system(cmd)
+		    if empty(glob(undofile)) &&
+			\ &undodir =~ '^\.\($\|,\)'
+			" Can't create undofile
+			call add(s:msg, "Can't create undofile in current " .
+			    \ "directory, skipping writing undofiles!")
+			return
+		    endif
+		    call <sid>Exec("wundo! ". fnameescape(undofile(file)))
+		    if empty(glob(fnameescape(undofile(file))))
+			" Writing undofile not possible 
+			call add(s:msg,  "Error occured, when writing undofile" .
+			    \ v:exception)
+			return
+		    endif
+		    if (has("unix") || has("macunix")) && !empty(undofile)
+			let ufile = string(shellescape(undofile, 1))
+			let perm = system("stat -c '%u:%g' " .
+				\ shellescape(file, 1))[:-2]
+			" Make sure, undo file is readable for current user
+			let cmd  = printf("!%s sh -c 'test -f %s && ".
+				    \ "chown %s -- %s && ",
+				    \ join(s:AuthTool, ' '), ufile, perm, ufile)
+			let cmd .= printf("chmod a+r -- %s 2>/dev/null'", ufile)
+			if has("gui_running")
+			    call <sid>echoWarn("Enter password again for".
+				\ " setting permissions of the undofile")
+			endif
+			call <sid>Exec(cmd)
+			"call system(cmd)
+		    endif
 		endif
 	    endif
-	endif
+	endif " has("persistent_undo")
 	" Make sure W11 warning is triggered and consumed by 'ar' setting
 	checktime
 	" Reset autoread option
@@ -169,9 +171,11 @@ fu! <sid>SudoRead(file) "{{{2
 	throw /sudo:readError/
     endif
     sil $d _
-    " Force reading undofile, if one exists
-    if filereadable(undofile(a:file))
-	exe "sil rundo" escape(undofile(a:file), '%')
+    if has("persistent_undo")
+	" Force reading undofile, if one exists
+	if filereadable(undofile(a:file))
+	    exe "sil rundo" escape(undofile(a:file), '%')
+	endif
     endif
     filetype detect
     set nomod
@@ -314,7 +318,7 @@ fu! <sid>SudoAskPasswd() "{{{2
 		\ "/usr/bin/ksshaskpass",
 		\ "/usr/lib/ssh/x11-ssh-askpass" ]
     if exists("g:sudo_askpass")
-	let askpwd = insert(askpw, g:sudo_askpass, 0)
+	let askpwd = insert(askpwd, g:sudo_askpass, 0)
     endif
     let sudo_arg = '-A'
     let sudo_askpass = expand("$SUDO_ASKPASS")
@@ -355,11 +359,11 @@ endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 :  }}}
 doc/SudoEdit.txt	[[[1
-315
+332
 *SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.16 Thu, 17 May 2012 21:17:45 +0200
+Version: Vers 0.17 Mon, 20 Aug 2012 19:30:22 +0200
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -586,11 +590,28 @@ Write me an email (look in the first line for my mail address). And if you are
 really happy, vote for the plugin and consider looking at my Amazon whishlist:
 http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
+6) Plugin Feedback                                        *SudoEdit-feedback*
+
+Feedback is always welcome. If you like the plugin, please rate it at the
+vim-page:
+http://www.vim.org/scripts/script.php?script_id=2709
+
+You can also follow the development of the plugin at github:
+http://github.com/chrisbra/SudoEdit.vim
+
+Please don't hesitate to report any bugs to the maintainer, mentioned in the
+third line of this document.
+
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.17: Aug 20, 2012 "{{{1
+	    - Guard against a vim without persistent_undo feature
+	    - fix variable typo
+	      (https://github.com/chrisbra/SudoEdit.vim/pull/16
+	      patch by NagatoPain, thanks!)
 	0.16: May 17, 2012 "{{{1
 	    - Make the plugin usable on Windows |SudoEdit-Win|
-	0.15: May 8, 2012 "{{{1
+	0.15: May 08, 2012 "{{{1
 	    - fix Syntax error (reported by Gary Johnson, thanks!)
 	0.14: Apr 30, 2012 "{{{1
 	    - fix issue #15
@@ -675,12 +696,12 @@ plugin/SudoEdit.vim	[[[1
 83
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.16
+" Version:  0.17
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Thu, 17 May 2012 21:17:45 +0200
+" Last Change: Mon, 20 Aug 2012 19:30:22 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 16 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 17 :AutoInstall: SudoEdit.vim
 " Documentation: see :h SudoEdit.txt
 
 " ---------------------------------------------------------------------
