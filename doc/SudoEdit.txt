@@ -242,11 +242,14 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
-	0.17: (unreleased)
+	0.17: Aug 20, 2012 "{{{1
 	    - Guard against a vim without persistent_undo feature
+	    - fix variable typo
+	      (https://github.com/chrisbra/SudoEdit.vim/pull/16
+	      patch by NagatoPain, thanks!)
 	0.16: May 17, 2012 "{{{1
 	    - Make the plugin usable on Windows |SudoEdit-Win|
-	0.15: May 8, 2012 "{{{1
+	0.15: May 08, 2012 "{{{1
 	    - fix Syntax error (reported by Gary Johnson, thanks!)
 	0.14: Apr 30, 2012 "{{{1
 	    - fix issue #15
