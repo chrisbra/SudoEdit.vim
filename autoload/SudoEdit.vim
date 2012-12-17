@@ -228,12 +228,19 @@ endfu
 fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     call <sid>LocalSettings(1, 1)
     let s:use_sudo_protocol_handler = 0
-    let file = expand(a:file)
-    if file =~ '^sudo:'
-	let s:use_sudo_protocol_handler = 1
-	let file = substitute(file, '^sudo:', '', '')
+    if empty(a:file)
+	let file = expand("%")
+    else
+	let file = expand(a:file)
+	if empty(file)
+	    let file = a:file " expand() might fail (issue #17)
+	endif
+	if file =~ '^sudo:'
+	    let s:use_sudo_protocol_handler = 1
+	    let file = substitute(file, '^sudo:', '', '')
+	endif
+	let file = fnamemodify(file, ':p')
     endif
-    let file = empty(a:file) ? expand("%") : file
     if empty(file)
 	call <sid>echoWarn("Cannot write file. Please enter filename for writing!")
 	call <sid>LocalSettings(0, 1)
