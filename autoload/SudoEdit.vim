@@ -70,11 +70,20 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 	let s:o_ar  = &l:ar
 	let &srr = '>'
 	setl ar
+	let s:o_tti = &t_ti
+	let s:o_tte = &t_te
+	" Turn off screen switching
+	set t_ti= t_te=
 	call <sid>Init()
     else
 	" Reset old settings
 	" shellredirection
 	let &srr  = s:o_srr
+	" Screen switchting codes
+	let &t_ti = s:o_tti
+	let &t_te = s:o_tte
+	" Turn off screen switching
+	set t_ti= t_te=
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
 	let file=substitute(expand("%"), '^sudo:', '', '')
@@ -163,7 +172,7 @@ fu! <sid>SudoRead(file) "{{{2
     call <sid>Exec(cmd)
     if v:shell_error
 	echoerr "Error reading ". a:file . "! Password wrong?"
-	throw /sudo:readError/
+	throw "sudo:readError:"
     endif
     sil $d _
     if has("persistent_undo")
@@ -265,14 +274,13 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	endif
     catch /sudo:writeError/
 	call <sid>Exception("There was an error writing the file!")
-	call <sid>Mes(s:msg)
 	return
     catch /sudo:readError/
 	call <sid>Exception("There was an error reading the file ". file. " !")
-	call <sid>Mes(s:msg)
 	return
     finally
 	call <sid>LocalSettings(0, a:readflag)
+	call <sid>Mes(s:msg)
     endtry
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
 	let file = 'sudo:' . fnamemodify(file, ':p')
@@ -283,14 +291,14 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	exe ':sil f ' . file
 	filetype detect
     endif
-    call <sid>Mes(s:msg)
 endfu
 
 fu! <sid>Mes(msg) "{{{2
-    if !empty(s:msg)
+    if !(exists("g:sudoDebug") && g:sudoDebug)
 	redr!
-    else
-	return
+	if empty(s:msg)
+	    return
+	endif
     endif
     for mess in a:msg
 	echom mess
@@ -299,8 +307,15 @@ fu! <sid>Mes(msg) "{{{2
 endfu
 
 fu! <sid>Exception(msg) "{{{2
-    echoerr v:errmsg
-    echoerr a:msg
+    echohl Error
+    echo a:msg
+    if exists("g:sudoDebug") && g:sudoDebug
+	echo v:throwpoint
+    else
+	echohl Normal
+	call input("Hit enter to continue")
+    endif
+    echohl Normal
 endfu
 
 fu! <sid>CheckNetrwFile(file) "{{{2
@@ -348,13 +363,14 @@ fu! <sid>Exec(cmd) "{{{2
 	let cmd = 'verb '. cmd
 	call <sid>echoWarn(cmd)
 	exe cmd
-	" Allow the user to read messages
-	sleep 3
+	" probably hit-enter prompt is shown
     else
 	if has("gui_running")
 	    exe cmd
 	else
 	    silent exe cmd
+	    " avoid hit-enter prompt
+	    redraw!
 	endif
     endif
 endfu
