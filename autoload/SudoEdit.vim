@@ -56,9 +56,20 @@ fu! <sid>Init() "{{{2
 	endif
 	call <sid>SudoAskPasswd()
 	call add(s:AuthTool, s:sudoAuthArg . " ")
+	let s:error_dir = tempname()
     endif
     " Stack of messages
     let s:msg = []
+endfu
+
+fu! <sid>Mkdir(dir) "{{{2
+    " First remove the directory, it might still be there from last call
+    if has("win32") || has("win64")
+	sil! call system("rd /s /q ". s:error_dir)
+    else
+	sil! call system("rm -rf -- ". s:error_dir)
+    endif
+    call system("mkdir ". s:error_dir)
 endfu
 
 fu! <sid>LocalSettings(values, readflag) "{{{2
@@ -75,6 +86,8 @@ fu! <sid>LocalSettings(values, readflag) "{{{2
 	" Turn off screen switching
 	set t_ti= t_te=
 	call <sid>Init()
+	call <sid>Mkdir(s:error_dir)
+	let s:error_file = s:error_dir. '/error'
 	return [o_srr, o_ar, o_tti, o_tte]
     else
 	" Make sure, persistent undo information is written
@@ -105,8 +118,7 @@ fu! <sid>LocalSettings(values, readflag) "{{{2
 			call <sid>Exec("wundo! ". fnameescape(undofile(file)))
 			if empty(glob(fnameescape(undofile(file))))
 			    " Writing undofile not possible 
-			    call add(s:msg,  "Error occured, when writing undofile" .
-				\ v:exception)
+			    call add(s:msg,  "Error occured, when writing undofile:")
 			    return
 			endif
 			if (has("unix") || has("macunix")) && !empty(undofile)
@@ -117,7 +129,7 @@ fu! <sid>LocalSettings(values, readflag) "{{{2
 			    let cmd  = printf("!%s sh -c 'test -f %s && ".
 					\ "chown %s -- %s && ",
 					\ join(s:AuthTool, ' '), ufile, perm, ufile)
-			    let cmd .= printf("chmod a+r -- %s 2>/dev/null'", ufile)
+			    let cmd .= printf("chmod a+r -- %s 2>%s'", ufile, s:error_file)
 			    if has("gui_running")
 				call <sid>echoWarn("Enter password again for".
 				    \ " setting permissions of the undofile")
@@ -166,7 +178,7 @@ fu! <sid>SudoRead(file) "{{{2
     if has("gui_win32")
 	let cmd='"type '. shellescape(a:file,1). '"'
     else
-	let cmd='cat ' . shellescape(a:file,1) . ' 2>/dev/null'
+	let cmd='cat ' . shellescape(a:file,1) . ' 2>'. s:error_file
     endif
     if  s:AuthTool[0] =~ '^su$'
         let cmd='"' . cmd . '" --'
@@ -199,7 +211,7 @@ fu! <sid>SudoWrite(file) range "{{{2
 	if has("gui_w32")
 	    let cmd='"type >'. shellescape(a:file,1). '"'
 	else
-	    let cmd='tee >/dev/null ' . shellescape(a:file,1)
+	    let cmd=printf('tee >/dev/null 2>%s %s',s:error_file, shellescape(a:file,1))
 	endif
 	let cmd=a:firstline . ',' . a:lastline . 'w !' .
 	    \ join(s:AuthTool, ' ') . cmd
@@ -220,9 +232,6 @@ fu! <sid>SudoWrite(file) range "{{{2
 	call <sid>Exec(cmd)
     endif
     if v:shell_error
-	if exists("g:sudoDebug") && g:sudoDebug
-	    call <sid>echoWarn(v:shell_error)
-	endif
 	throw "sudo:writeError"
     endif
     " Write successful
@@ -304,7 +313,7 @@ fu! <sid>Mes(msg) "{{{2
 	endif
     endif
     for mess in a:msg
-	echom mess
+	echo mess
     endfor
     let s:msg=[]
 endfu
@@ -362,7 +371,7 @@ endfu
 fu! <sid>Exec(cmd) "{{{2
     let cmd = a:cmd
     if exists("g:sudoDebug") && g:sudoDebug
-	let cmd = substitute(a:cmd, '2>/dev/null', '', 'g')
+	let cmd = substitute(a:cmd, '2>'.s:error_file, '', 'g')
 	let cmd = 'verb '. cmd
 	call <sid>echoWarn(cmd)
 	exe cmd
@@ -375,6 +384,11 @@ fu! <sid>Exec(cmd) "{{{2
 	    " avoid hit-enter prompt
 	    redraw!
 	endif
+    endif
+    if filereadable(s:error_file) && getfsize(s:error_file) > 0
+	let error=readfile(s:error_file)
+	call add(s:msg, join(error, "\n"))
+	call delete(s:error_file)
     endif
 endfu
 " Modeline {{{1
