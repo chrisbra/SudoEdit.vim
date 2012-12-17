@@ -61,29 +61,27 @@ fu! <sid>Init() "{{{2
     let s:msg = []
 endfu
 
-fu! <sid>LocalSettings(setflag, readflag) "{{{2
-    if a:setflag
+fu! <sid>LocalSettings(values, readflag) "{{{2
+    if empty(a:values)
 	" Set shellrediraction temporarily
 	" This is used to get su working right!
-	let s:o_srr = &srr
+	let o_srr = &srr
 	" avoid W11 warning
-	let s:o_ar  = &l:ar
+	let o_ar  = &l:ar
 	let &srr = '>'
 	setl ar
-	let s:o_tti = &t_ti
-	let s:o_tte = &t_te
+	let o_tti = &t_ti
+	let o_tte = &t_te
 	" Turn off screen switching
 	set t_ti= t_te=
 	call <sid>Init()
+	return [o_srr, o_ar, o_tti, o_tte]
     else
 	" Reset old settings
 	" shellredirection
-	let &srr  = s:o_srr
+	let &srr  = a:values[0]
 	" Screen switchting codes
-	let &t_ti = s:o_tti
-	let &t_te = s:o_tte
-	" Turn off screen switching
-	set t_ti= t_te=
+	let [ &t_ti, &t_te ] = a:values[2:3]
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
 	let file=substitute(expand("%"), '^sudo:', '', '')
@@ -137,7 +135,7 @@ fu! <sid>LocalSettings(setflag, readflag) "{{{2
 	" Make sure W11 warning is triggered and consumed by 'ar' setting
 	checktime
 	" Reset autoread option
-	let &l:ar = s:o_ar
+	let &l:ar = a:values[1]
     endif
 endfu
 
@@ -172,7 +170,7 @@ fu! <sid>SudoRead(file) "{{{2
     call <sid>Exec(cmd)
     if v:shell_error
 	echoerr "Error reading ". a:file . "! Password wrong?"
-	throw "sudo:readError:"
+	throw "sudo:readError"
     endif
     sil $d _
     if has("persistent_undo")
@@ -235,7 +233,7 @@ fu! <sid>Stats(file) "{{{2
 endfu
 
 fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
-    call <sid>LocalSettings(1, 1)
+    let _settings=<sid>LocalSettings([], 1)
     let s:use_sudo_protocol_handler = 0
     if empty(a:file)
 	let file = expand("%")
@@ -252,7 +250,7 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     endif
     if empty(file)
 	call <sid>echoWarn("Cannot write file. Please enter filename for writing!")
-	call <sid>LocalSettings(0, 1)
+	call <sid>LocalSettings(_settings, 1)
 	return
     endif
     try
@@ -279,7 +277,7 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	call <sid>Exception("There was an error reading the file ". file. " !")
 	return
     finally
-	call <sid>LocalSettings(0, a:readflag)
+	call <sid>LocalSettings(_settings, a:readflag)
 	call <sid>Mes(s:msg)
     endtry
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
@@ -308,7 +306,7 @@ endfu
 
 fu! <sid>Exception(msg) "{{{2
     echohl Error
-    echo a:msg
+    echomsg a:msg
     if exists("g:sudoDebug") && g:sudoDebug
 	echo v:throwpoint
     else
