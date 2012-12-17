@@ -77,65 +77,70 @@ fu! <sid>LocalSettings(values, readflag) "{{{2
 	call <sid>Init()
 	return [o_srr, o_ar, o_tti, o_tte]
     else
-	" Reset old settings
-	" shellredirection
-	let &srr  = a:values[0]
-	" Screen switchting codes
-	let [ &t_ti, &t_te ] = a:values[2:3]
 	" Make sure, persistent undo information is written
 	" but only for valid files and not empty ones
 	let file=substitute(expand("%"), '^sudo:', '', '')
-	if has("persistent_undo")
-	    let undofile = undofile(file)
-	    if !empty(file) &&
-		\!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
-		\ &l:udf
-		if !a:readflag
-		    " Force reading in the buffer to avoid stupid W13 warning
-		    " don't do this in GUI mode, so one does not have to enter
-		    " the password again (Leave the W13 warning)
-		    if !has("gui_running") && s:new_file
-			"sil call <sid>SudoRead(file)
-			" Be careful, :e! within a BufWriteCmd can crash Vim!
-			exe "e!" file
-		    endif
-		    if empty(glob(undofile)) &&
-			\ &undodir =~ '^\.\($\|,\)'
-			" Can't create undofile
-			call add(s:msg, "Can't create undofile in current " .
-			    \ "directory, skipping writing undofiles!")
-			return
-		    endif
-		    call <sid>Exec("wundo! ". fnameescape(undofile(file)))
-		    if empty(glob(fnameescape(undofile(file))))
-			" Writing undofile not possible 
-			call add(s:msg,  "Error occured, when writing undofile" .
-			    \ v:exception)
-			return
-		    endif
-		    if (has("unix") || has("macunix")) && !empty(undofile)
-			let ufile = string(shellescape(undofile, 1))
-			let perm = system("stat -c '%u:%g' " .
-				\ shellescape(file, 1))[:-2]
-			" Make sure, undo file is readable for current user
-			let cmd  = printf("!%s sh -c 'test -f %s && ".
-				    \ "chown %s -- %s && ",
-				    \ join(s:AuthTool, ' '), ufile, perm, ufile)
-			let cmd .= printf("chmod a+r -- %s 2>/dev/null'", ufile)
-			if has("gui_running")
-			    call <sid>echoWarn("Enter password again for".
-				\ " setting permissions of the undofile")
+	try
+	    if has("persistent_undo")
+		let undofile = undofile(file)
+		if !empty(file) &&
+		    \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
+		    \ &l:udf
+		    if !a:readflag
+			" Force reading in the buffer to avoid stupid W13 warning
+			" don't do this in GUI mode, so one does not have to enter
+			" the password again (Leave the W13 warning)
+			if !has("gui_running") && s:new_file
+			    "sil call <sid>SudoRead(file)
+			    " Be careful, :e! within a BufWriteCmd can crash Vim!
+			    exe "e!" file
 			endif
-			call <sid>Exec(cmd)
-			"call system(cmd)
+			if empty(glob(undofile)) &&
+			    \ &undodir =~ '^\.\($\|,\)'
+			    " Can't create undofile
+			    call add(s:msg, "Can't create undofile in current " .
+				\ "directory, skipping writing undofiles!")
+			    throw "sudo:undofileError"
+			endif
+			call <sid>Exec("wundo! ". fnameescape(undofile(file)))
+			if empty(glob(fnameescape(undofile(file))))
+			    " Writing undofile not possible 
+			    call add(s:msg,  "Error occured, when writing undofile" .
+				\ v:exception)
+			    return
+			endif
+			if (has("unix") || has("macunix")) && !empty(undofile)
+			    let ufile = string(shellescape(undofile, 1))
+			    let perm = system("stat -c '%u:%g' " .
+				    \ shellescape(file, 1))[:-2]
+			    " Make sure, undo file is readable for current user
+			    let cmd  = printf("!%s sh -c 'test -f %s && ".
+					\ "chown %s -- %s && ",
+					\ join(s:AuthTool, ' '), ufile, perm, ufile)
+			    let cmd .= printf("chmod a+r -- %s 2>/dev/null'", ufile)
+			    if has("gui_running")
+				call <sid>echoWarn("Enter password again for".
+				    \ " setting permissions of the undofile")
+			    endif
+			    call <sid>Exec(cmd)
+			    "call system(cmd)
+			endif
 		    endif
 		endif
-	    endif
-	endif " has("persistent_undo")
-	" Make sure W11 warning is triggered and consumed by 'ar' setting
-	checktime
-	" Reset autoread option
-	let &l:ar = a:values[1]
+	    endif " has("persistent_undo")
+	catch
+	    " no-op
+	finally
+	    " Make sure W11 warning is triggered and consumed by 'ar' setting
+	    checktime
+	    " Reset old settings
+	    " shellredirection
+	    let &srr  = a:values[0]
+	    " Screen switchting codes
+	    let [ &t_ti, &t_te ] = a:values[2:3]
+	    " Reset autoread option
+	    let &l:ar = a:values[1]
+	endtry
     endif
 endfu
 
