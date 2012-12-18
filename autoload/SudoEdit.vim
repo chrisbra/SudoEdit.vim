@@ -65,11 +65,11 @@ endfu
 fu! <sid>Mkdir(dir) "{{{2
     " First remove the directory, it might still be there from last call
     if has("win32") || has("win64")
-	sil! call system("rd /s /q ". s:error_dir)
+	sil! call system("rd /s /q ". a:dir)
     else
-	sil! call system("rm -rf -- ". s:error_dir)
+	sil! call system("rm -rf -- ". a:dir)
     endif
-    call system("mkdir ". s:error_dir)
+    call system("mkdir ". a:dir)
 endfu
 
 fu! <sid>LocalSettings(values, readflag) "{{{2
@@ -118,7 +118,7 @@ fu! <sid>LocalSettings(values, readflag) "{{{2
 			call <sid>Exec("wundo! ". fnameescape(undofile(file)))
 			if empty(glob(fnameescape(undofile(file))))
 			    " Writing undofile not possible 
-			    call add(s:msg,  "Error occured, when writing undofile:")
+			    call add(s:msg,  "Error occured, when writing undofile")
 			    return
 			endif
 			if (has("unix") || has("macunix")) && !empty(undofile)
