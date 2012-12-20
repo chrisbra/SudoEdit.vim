@@ -9,6 +9,8 @@
 
 " Functions: "{{{1
 
+let s:dir=fnamemodify(expand("<sfile>"), ':p:h')
+
 fu! <sid>Init() "{{{2
 " Which Tool for super-user access to use
 " Will be tried in order, first tool that is found will be used
@@ -19,7 +21,7 @@ fu! <sid>Init() "{{{2
 	let s:sudoAuth=" sudo su "
 	if has("mac") || has("macunix")
 	    let s:sudoAuth = "security". s:sudoAuth
-	elseif has("gui_win32")
+	elseif <sid>is_Windows()
 	    let s:sudoAuth = "runas elevate". s:sudoAuth
 	endif
 	if exists("g:sudoAuth")
@@ -46,7 +48,6 @@ fu! <sid>Init() "{{{2
 	    call <sid>echoWarn("No authentication tool found, aborting!")
 	    finish
 	endif
-
 	if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
 	    let s:sudoAuthArg="-c"
 	elseif s:AuthTool[0] == "security" && empty(s:sudoAuthArg)
@@ -57,6 +58,10 @@ fu! <sid>Init() "{{{2
 	call <sid>SudoAskPasswd()
 	call add(s:AuthTool, s:sudoAuthArg . " ")
 	let s:error_dir = tempname()
+	if !exists("s:writable_file")
+	    let s:writeable_file = tempname()
+	endif
+
     endif
     " Stack of messages
     let s:msg = []
@@ -64,7 +69,7 @@ endfu
 
 fu! <sid>Mkdir(dir) "{{{2
     " First remove the directory, it might still be there from last call
-    if has("win32") || has("win64")
+    if <sid>is_Windows()
 	sil! call system("rd /s /q ". a:dir)
     else
 	sil! call system("rm -rf -- ". a:dir)
@@ -175,19 +180,23 @@ endfu
 
 fu! <sid>SudoRead(file) "{{{2
     sil %d _
-    if has("gui_win32")
-	let cmd='"type '. shellescape(a:file,1). '"'
+    if <sid>is_Windows()
+	let cmd= '!'. s:dir.'\sudo.cmd '. shellescape(a:file,1).
+	    \ ' '. s:writable_file. ' '. "read ". join(s:AuthTool, ' ')
     else
 	let cmd='cat ' . shellescape(a:file,1) . ' 2>'. s:error_file
+	if  s:AuthTool[0] =~ '^su$'
+	    let cmd='"' . cmd . '" --'
+	endif
+	let cmd=':0r! ' . join(s:AuthTool, ' ') . cmd
     endif
-    if  s:AuthTool[0] =~ '^su$'
-        let cmd='"' . cmd . '" --'
-    endif
-    let cmd=':0r! ' . join(s:AuthTool, ' ') . cmd
     call <sid>Exec(cmd)
     if v:shell_error
 	echoerr "Error reading ". a:file . "! Password wrong?"
 	throw "sudo:readError"
+    endif
+    if <sid>is_Windows()
+	exe ':r ' s:writable_file
     endif
     sil $d _
     if has("persistent_undo")
@@ -206,15 +215,21 @@ fu! <sid>SudoWrite(file) range "{{{2
 	let tmpfile = tempname()
 	exe a:firstline . ',' . a:lastline . 'w ' . tmpfile
 	let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . tmpfile . ' ' .
-	    \ a:file . '" --'
+	    \ shellescape(a:file,1) . '" --'
     else
-	if has("gui_w32")
-	    let cmd='"type >'. shellescape(a:file,1). '"'
+	if <sid>is_Windows()
+	    let content=getline('.', '$')
+	    if &ff == "dos"
+		call map(content, "v:val.nr2char(13)")
+	    endif
+	    call writefile(content + [""], s:writable_file, 'b')
+	    let cmd= '!'. s:dir.'\sudo.cmd '. shellescape(a:file,1).
+		\ ' '. s:writable_file. ' '. "write ". join(s:AuthTool, ' ')
 	else
 	    let cmd=printf('tee >/dev/null 2>%s %s',s:error_file, shellescape(a:file,1))
+	    let cmd=a:firstline . ',' . a:lastline . 'w !' .
+		\ join(s:AuthTool, ' ') . cmd
 	endif
-	let cmd=a:firstline . ',' . a:lastline . 'w !' .
-	    \ join(s:AuthTool, ' ') . cmd
     endif
     if <sid>CheckNetrwFile(a:file) && exists(":NetUserPass") == 2
 	let protocol = matchstr(a:file, '^[^:]:')
@@ -280,8 +295,7 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 		call <sid>echoWarn("Buffer not modified, not writing!")
 		return
 	    endif
-	    exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite('.
-		\ shellescape(file,1) . ')'
+	    exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite(file)'
 	    call add(s:msg, <sid>Stats(file))
 	endif
     catch /sudo:writeError/
@@ -303,6 +317,10 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
 	exe ':sil f ' . file
 	filetype detect
     endif
+endfu
+
+fu! <sid>is_Windows() "{{{2
+    return has("win32") || has("win16") || has("win64")
 endfu
 
 fu! <sid>Mes(msg) "{{{2
