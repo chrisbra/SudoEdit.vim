@@ -242,6 +242,11 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.18: (unreleased) "{{{1
+	    - expand() may return empty filenames (issue #17
+	      patch by Daniel Hahler, thanks!)
+	    - better exception handling (issue# 19)
+	    - included sudo.cmd for better usage on Windows
 	0.17: Aug 20, 2012 "{{{1
 	    - Guard against a vim without persistent_undo feature
 	    - fix variable typo
