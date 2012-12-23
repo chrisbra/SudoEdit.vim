@@ -58,10 +58,10 @@ fu! <sid>Init() "{{{2
 	call <sid>SudoAskPasswd()
 	call add(s:AuthTool, s:sudoAuthArg . " ")
 	let s:error_dir = tempname()
-	if !exists("s:writable_file")
-	    let s:writeable_file = tempname()
-	endif
 
+    endif
+    if !exists("s:writable_file")
+	let s:writeable_file = tempname()
     endif
     " Stack of messages
     let s:msg = []
