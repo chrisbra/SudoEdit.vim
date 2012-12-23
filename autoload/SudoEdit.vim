@@ -60,9 +60,9 @@ fu! <sid>Init() "{{{2
 	let s:error_dir = tempname()
 
     endif
-    if !exists("s:writable_file")
-	let s:writeable_file = tempname()
-    endif
+	if !exists("s:writable_file")
+	    let s:writable_file = tempname()
+	endif
     " Stack of messages
     let s:msg = []
 endfu
