@@ -22,8 +22,8 @@ set params=%params% %1
 goto loop
 :afterloop
     
-if %mode% == 'write' (
-    %sudo% %params% "cmd.exe /k type %newcontent% >%myfile%"
+if '%mode%' == 'write' (
+    %sudo% %params% "cmd.exe /c type %newcontent% >%myfile%"
     ) else (
     %sudo% %params% "cmd.exe /c type %myfile% >%newcontent%"
     )
