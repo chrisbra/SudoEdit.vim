@@ -58,11 +58,12 @@ fu! <sid>Init() "{{{2
 	call <sid>SudoAskPasswd()
 	call add(s:AuthTool, s:sudoAuthArg . " ")
 	let s:error_dir = tempname()
+	"  Needed for Windows
+	if !exists("s:writable_file")
+	    let s:writable_file = shellescape(fnamemodify(tempname(), ':p:8'),1)
+	endif
 
     endif
-	if !exists("s:writable_file")
-	    let s:writable_file = tempname()
-	endif
     " Stack of messages
     let s:msg = []
 endfu
@@ -181,7 +182,8 @@ endfu
 fu! <sid>SudoRead(file) "{{{2
     sil %d _
     if <sid>is_Windows()
-	let cmd= '!'. s:dir.'\sudo.cmd '. shellescape(a:file,1).
+	let file=shellescape(fnamemodify(a:file, ':p:8'), 1)
+	let cmd= '!'. s:dir.'\sudo.cmd '. file. 
 	    \ ' '. s:writable_file. ' '. "read ". join(s:AuthTool, ' ')
     else
 	let cmd='cat ' . shellescape(a:file,1) . ' 2>'. s:error_file
