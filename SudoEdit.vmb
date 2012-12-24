@@ -2,7 +2,7 @@
 UseVimball
 finish
 autoload/SudoEdit.vim	[[[1
-413
+415
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
 " Version:  0.17
@@ -63,8 +63,9 @@ fu! <sid>Init() "{{{2
 	call <sid>SudoAskPasswd()
 	call add(s:AuthTool, s:sudoAuthArg . " ")
 	let s:error_dir = tempname()
+	"  Needed for Windows
 	if !exists("s:writable_file")
-	    let s:writeable_file = tempname()
+	    let s:writable_file = shellescape(fnamemodify(tempname(), ':p:8'),1)
 	endif
 
     endif
@@ -186,7 +187,8 @@ endfu
 fu! <sid>SudoRead(file) "{{{2
     sil %d _
     if <sid>is_Windows()
-	let cmd= '!'. s:dir.'\sudo.cmd '. shellescape(a:file,1).
+	let file=shellescape(fnamemodify(a:file, ':p:8'), 1)
+	let cmd= '!'. s:dir.'\sudo.cmd '. file. 
 	    \ ' '. s:writable_file. ' '. "read ". join(s:AuthTool, ' ')
     else
 	let cmd='cat ' . shellescape(a:file,1) . ' 2>'. s:error_file
@@ -866,8 +868,8 @@ set params=%params% %1
 goto loop
 :afterloop
     
-if %mode% == 'write' (
-    %sudo% %params% "cmd.exe /k type %newcontent% >%myfile%"
+if '%mode%' == 'write' (
+    %sudo% %params% "cmd.exe /c type %newcontent% >%myfile%"
     ) else (
     %sudo% %params% "cmd.exe /c type %myfile% >%newcontent%"
     )
