@@ -17,15 +17,16 @@ fu! <sid>Init() "{{{2
 " (e.g. you could use ssh)
 " You can specify one in your .vimrc using the
 " global variable g:sudoAuth
-    if !exists("s:AuthTool")
+" always check
+"    if !exists("s:AuthTool")
         let s:sudoAuth=" sudo su "
         if <sid>Is("mac")
-            let s:sudoAuth = "security". s:sudoAuth
+            let s:sudoAuth = "security ". s:sudoAuth
         elseif <sid>Is("win")
-            let s:sudoAuth = "runas elevate". s:sudoAuth
+            let s:sudoAuth = "runas elevate ". s:sudoAuth
         endif
         if exists("g:sudoAuth")
-            let s:sudoAuth = g:sudoAuth . s:sudoAuth 
+            let s:sudoAuth = g:sudoAuth .' '. s:sudoAuth 
         endif
 
         " Specify the parameter to use for the auth tool e.g. su uses "-c", but
@@ -46,7 +47,7 @@ fu! <sid>Init() "{{{2
         let s:AuthTool = <sid>CheckAuthTool(split(s:sudoAuth, '\s'))
         if empty(s:AuthTool)
             call <sid>echoWarn("No authentication tool found, aborting!")
-            finish
+            throw "sudo:noTool"
         endif
         if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
             let s:sudoAuthArg="-c"
@@ -54,6 +55,7 @@ fu! <sid>Init() "{{{2
             let s:sudoAuthArg="execute-with-privileges"
         elseif s:AuthTool[0] == "runas" && empty(s:sudoAuthArg)
             let s:sudoAuthArg = "/noprofile /user:\"Administrator\""
+            let s:sudoAuthArg = "/noprofile /user:\"Christian Brabandt\""
         endif
         if <sid>Is("win")
             if !exists("s:writable_file")
@@ -79,7 +81,7 @@ fu! <sid>Init() "{{{2
                 let s:error_file = fnamemodify(s:error_file, ':p:8')
             endif
         endif
-    endif
+"    endif
     " Stack of messages
     let s:msg = []
 endfu
@@ -218,10 +220,15 @@ fu! <sid>SudoRead(file) "{{{2
         throw "sudo:readError"
     endif
     if <sid>Is("win")
-        exe ':r ' s:writable_file
-    else
-        sil $d _
+        if !filereadable(s:writable_file[1:-2])
+            call add(s:msg, "Temporary file ". s:writable_file. 
+                        \ " does not exist. Probably access was denied!")
+            throw "sudo:readError"
+        else
+            exe ':0r ' s:writable_file[1:-2]
+        endif
     endif
+    sil $d _
     if has("persistent_undo")
         " Force reading undofile, if one exists
         if filereadable(undofile(a:file))
@@ -235,12 +242,12 @@ endfu
 fu! <sid>SudoWrite(file) range "{{{2
     if  s:AuthTool[0] == 'su'
     " Workaround since su cannot be run with :w !
-        exe a:firstline . ',' . a:lastline . 'w ' . s:writable_file
+        exe a:firstline . ',' . a:lastline . 'w! ' . s:writable_file
         let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . s:writable_file . ' ' .
             \ shellescape(a:file,1) . '" --'
     else
         if <sid>Is("win")
-            exe a:firstline . ',' . a:lastline . 'w ' . s:writable_file
+            exe a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
             let cmd= '!'. s:dir.'\sudo.cmd dummy write '. shellescape(fnamemodify(a:file, ':p:8')).
                 \ ' '. s:writable_file. ' '. join(s:AuthTool, ' ')
         else
@@ -384,7 +391,12 @@ fu! SudoEdit#Rmdir(dir) "{{{2
 endfu
 
 fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
-    let _settings=<sid>LocalSettings([], 1)
+    try
+        let _settings=<sid>LocalSettings([], 1)
+    catch /sudo:noTool/
+        call <sid>LocalSettings(_settings, a:readflag)
+        return
+    endtry
     let s:use_sudo_protocol_handler = 0
     if empty(a:file)
         let file = expand("%")
@@ -413,7 +425,7 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
                 return
             endif
         else
-            if !&mod && !empty(a:force)
+            if !&mod && empty(a:force)
                 call <sid>echoWarn("Buffer not modified, not writing!")
                 return
             endif
