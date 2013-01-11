@@ -17,8 +17,10 @@ fu! <sid>Init() "{{{2
 " (e.g. you could use ssh)
 " You can specify one in your .vimrc using the
 " global variable g:sudoAuth
-" always check
-"    if !exists("s:AuthTool")
+
+"    each time check, whether the authentication
+"    method changed (e.g. the User set a variable)
+"    if !exists("s:AuthTool") 
         let s:sudoAuth=" sudo su "
         if <sid>Is("mac")
             let s:sudoAuth = "security ". s:sudoAuth
@@ -55,7 +57,6 @@ fu! <sid>Init() "{{{2
             let s:sudoAuthArg="execute-with-privileges"
         elseif s:AuthTool[0] == "runas" && empty(s:sudoAuthArg)
             let s:sudoAuthArg = "/noprofile /user:\"Administrator\""
-            let s:sudoAuthArg = "/noprofile /user:\"Christian Brabandt\""
         endif
         if <sid>Is("win")
             if !exists("s:writable_file")
@@ -352,8 +353,9 @@ fu! <sid>SudoAskPasswd() "{{{2
             " give environment value to sudo, so -A knows
             " which program to call
             if (s:AuthTool[0] !~ 'SUDO_ASKPASS')
-            call insert(s:AuthTool, 'SUDO_ASKPASS='.shellescape(item,1), 0)
-            call add(s:AuthTool, '-A')
+                call insert(s:AuthTool, 'SUDO_ASKPASS='.shellescape(item,1), 0)
+                call add(s:AuthTool, '-A')
+                return
             endif
         endif
     endfor
