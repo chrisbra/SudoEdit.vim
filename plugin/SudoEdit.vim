@@ -1,11 +1,11 @@
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.17
+" Version:  0.18
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Mon, 20 Aug 2012 19:30:22 +0200
+" Last Change: Sat, 16 Feb 2013 23:15:51 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 17 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 18 :AutoInstall: SudoEdit.vim
 " Documentation: see :h SudoEdit.txt
 
 " ---------------------------------------------------------------------

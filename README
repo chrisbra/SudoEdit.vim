@@ -1,7 +1,7 @@
 *SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.17 Mon, 20 Aug 2012 19:30:22 +0200
+Version: Vers 0.18 Sat, 16 Feb 2013 23:15:51 +0100
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -178,6 +178,14 @@ http://technet.microsoft.com/en-us/sysinternals/cc300361.aspx
 Surun:
 http://kay-bruns.de/wp/software/surun/
 
+Alternatively, on recent Windows versions, you can use the builtin UAC system
+and have a batch script automatically elevated, which will do the writing and
+reading of the file. This method is rather experimental and might not work in
+all cases. To make use of UAC set the g:sudoAuth variable to the string "uac":
+>
+
+    :let g:sudoAuth="uac"
+
 ==============================================================================
 4. SudoEdit Debugging					    *SudoEdit-debug*
 
@@ -242,6 +250,12 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.18: Feb 16, 2013 "{{{1
+	    - expand() may return empty filenames (issue #17
+	      patch by Daniel Hahler, thanks!)
+	    - better exception handling (issue #19)
+	    - included sudo.cmd for better usage on Windows
+	    - enable sudo.cmd to use UAC optionally
 	0.17: Aug 20, 2012 "{{{1
 	    - Guard against a vim without persistent_undo feature
 	    - fix variable typo

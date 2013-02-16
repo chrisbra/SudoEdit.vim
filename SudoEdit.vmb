@@ -5,12 +5,12 @@ autoload/SudoEdit.vim	[[[1
 461
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.17
+" Version:  0.18
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Mon, 20 Aug 2012 19:30:22 +0200
+" Last Change: Sat, 16 Feb 2013 23:15:51 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 17 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 18 :AutoInstall: SudoEdit.vim
 
 " Functions: "{{{1
 
@@ -469,7 +469,7 @@ doc/SudoEdit.txt	[[[1
 *SudoEdit.txt*	Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.17 Mon, 20 Aug 2012 19:30:22 +0200
+Version: Vers 0.18 Sat, 16 Feb 2013 23:15:51 +0100
 Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -718,7 +718,7 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
-	0.18: (unreleased) "{{{1
+	0.18: Feb 16, 2013 "{{{1
 	    - expand() may return empty filenames (issue #17
 	      patch by Daniel Hahler, thanks!)
 	    - better exception handling (issue #19)
@@ -816,12 +816,12 @@ plugin/SudoEdit.vim	[[[1
 83
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.17
+" Version:  0.18
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Mon, 20 Aug 2012 19:30:22 +0200
+" Last Change: Sat, 16 Feb 2013 23:15:51 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 17 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 18 :AutoInstall: SudoEdit.vim
 " Documentation: see :h SudoEdit.txt
 
 " ---------------------------------------------------------------------
