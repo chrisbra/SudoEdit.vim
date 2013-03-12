@@ -89,6 +89,7 @@ endfu
 
 fu! <sid>Mkdir(dir) "{{{2
     " First remove the directory, it might still be there from last call
+    " parameter 'dir' is already shellescaped()!
     call SudoEdit#Rmdir(a:dir)
     call system("mkdir ". a:dir)
     " Clean up on Exit
@@ -96,7 +97,7 @@ fu! <sid>Mkdir(dir) "{{{2
         augroup SudoEditExit
             au!
             " Clean up when quitting Vim
-            exe "au VimLeave * :call SudoEdit#Rmdir('".a:dir. "')"
+            exe "au VimLeave * :call SudoEdit#Rmdir(".a:dir. ")"
         augroup END
     endif
 endfu
