@@ -74,7 +74,7 @@ fu! <sid>Init() "{{{2
         call <sid>SudoAskPasswd()
         call add(s:AuthTool, s:sudoAuthArg . " ")
         if !exists("s:error_dir")
-            let s:error_dir = shellescape(tempname())
+            let s:error_dir = tempname()
             call <sid>Mkdir(s:error_dir)
             let s:error_file = s:error_dir. '/error'
             if <sid>Is("win")
@@ -89,15 +89,15 @@ endfu
 
 fu! <sid>Mkdir(dir) "{{{2
     " First remove the directory, it might still be there from last call
-    " parameter 'dir' is already shellescaped()!
-    call SudoEdit#Rmdir(a:dir)
-    call system("mkdir ". a:dir)
+    let dir = shellescape(a:dir)
+    call SudoEdit#Rmdir(dir)
+    call system("mkdir ". dir)
     " Clean up on Exit
     if !exists('#SudoEditExit#VimLeave')
         augroup SudoEditExit
             au!
             " Clean up when quitting Vim
-            exe "au VimLeave * :call SudoEdit#Rmdir(".a:dir. ")"
+            exe "au VimLeave * :call SudoEdit#Rmdir(".dir. ")"
         augroup END
     endif
 endfu
@@ -157,7 +157,7 @@ fu! <sid>LocalSettings(values, readflag) "{{{2
                 let cmd  = printf("!%s sh -c 'test -f %s && ".
                     \ "chown %s -- %s && ",
                     \ join(s:AuthTool, ' '), ufile, perm, ufile)
-                let cmd .= printf("chmod a+r -- %s 2>%s'", ufile, s:error_file)
+                let cmd .= printf("chmod a+r -- %s 2>%s'", ufile, shellescape(s:error_file))
                 if has("gui_running")
                 call <sid>echoWarn("Enter password again for".
                     \ " setting permissions of the undofile")
@@ -210,7 +210,7 @@ fu! <sid>SudoRead(file) "{{{2
             \ ' '. s:writable_file.  ' '.
             \ join(s:AuthTool, ' ')
     else
-        let cmd='cat ' . shellescape(a:file,1) . ' 2>'. s:error_file
+        let cmd='cat ' . shellescape(a:file,1) . ' 2>'. shellescape(s:error_file)
         if  s:AuthTool[0] =~ '^su$'
             let cmd='"' . cmd . '" --'
         endif
@@ -253,7 +253,7 @@ fu! <sid>SudoWrite(file) range "{{{2
             let cmd= '!'. s:dir.'\sudo.cmd dummy write '. shellescape(fnamemodify(a:file, ':p:8')).
                 \ ' '. s:writable_file. ' '. join(s:AuthTool, ' ')
         else
-            let cmd=printf('tee >/dev/null 2>%s %s',s:error_file, shellescape(a:file,1))
+            let cmd=printf('tee >/dev/null 2>%s %s',shellescape(s:error_file), shellescape(a:file,1))
             let cmd=a:firstline . ',' . a:lastline . 'w !' .
             \ join(s:AuthTool, ' ') . cmd
         endif
@@ -365,7 +365,7 @@ endfu
 fu! <sid>Exec(cmd) "{{{2
     let cmd = a:cmd
     if exists("g:sudoDebug") && g:sudoDebug
-        let cmd = substitute(a:cmd, '2>'.s:error_file, '', 'g')
+        let cmd = substitute(a:cmd, '2>'.shellescape(s:error_file), '', 'g')
         let cmd = 'verb '. cmd
         call <sid>echoWarn(cmd)
         exe cmd
