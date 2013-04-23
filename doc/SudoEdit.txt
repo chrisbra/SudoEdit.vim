@@ -250,6 +250,13 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History					    *SudoEdit-history*
+	0.19: (unreleased) "{{{1
+	    - |SudoWrite| should always write if a filename has been given
+	      (issue #23, reported by Daniel Hahler, thanks!)
+	    - Better filename completion for |SudoWrite| and |SudoRead|
+	      commands (issue #20 reported by Daniel Hahler, thanks!)
+	    - Fix error in VimLeave autocommand (issue #22, reported by Daniel
+	      Hahler, thanks!)
 	0.18: Feb 16, 2013 "{{{1
 	    - expand() may return empty filenames (issue #17
 	      patch by Daniel Hahler, thanks!)
