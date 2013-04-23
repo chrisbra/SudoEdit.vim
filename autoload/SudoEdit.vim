@@ -131,7 +131,7 @@ fu! <sid>LocalSettings(values, readflag) "{{{2
             " Force reading in the buffer to avoid stupid W13 warning
             " don't do this in GUI mode, so one does not have to enter
             " the password again (Leave the W13 warning)
-            if !has("gui_running") && s:new_file
+            if !has("gui_running") && exists("s:new_file") && s:new_file
                 "sil call <sid>SudoRead(file)
                 " Be careful, :e! within a BufWriteCmd can crash Vim!
                 exe "e!" file
@@ -424,12 +424,12 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
             if !&mod || !empty(a:force)
                 call <sid>SudoRead(file)
             else
-                call <sid>echoWarn("Buffer modified, not reloading!")
+                call add(s:msg, "Buffer modified, not reloading!")
                 return
             endif
         else
-            if !&mod && empty(a:force)
-                call <sid>echoWarn("Buffer not modified, not writing!")
+            if !&mod && empty(a:force) && empty(a:file)
+                call add(s:msg, "Buffer not modified, not writing!")
                 return
             endif
             exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite(file)'
