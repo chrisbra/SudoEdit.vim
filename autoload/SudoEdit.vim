@@ -118,7 +118,9 @@ fu! <sid>LocalSettings(values, readflag) "{{{2
         " Set shell to something sane (zsh, doesn't allow to override files using
         " > redirection, issue #24, hopefully POSIX sh works everywhere)
         let o_shell = &shell
-        set shell=sh
+        if !<sid>Is("win")
+            set shell=sh
+        endif
         call <sid>Init()
         return [o_srr, o_ar, o_tti, o_tte, o_shell]
     else
