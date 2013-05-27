@@ -104,83 +104,87 @@ endfu
 
 fu! <sid>LocalSettings(values, readflag) "{{{2
     if empty(a:values)
-    " Set shellrediraction temporarily
-    " This is used to get su working right!
-    let o_srr = &srr
-    " avoid W11 warning
-    let o_ar  = &l:ar
-    let &srr = '>'
-    setl ar
-    let o_tti = &t_ti
-    let o_tte = &t_te
-    " Turn off screen switching
-    set t_ti= t_te=
-    call <sid>Init()
-    return [o_srr, o_ar, o_tti, o_tte]
+        " Set shellrediraction temporarily
+        " This is used to get su working right!
+        let o_srr = &srr
+        " avoid W11 warning
+        let o_ar  = &l:ar
+        let &srr = '>'
+        setl ar
+        let o_tti = &t_ti
+        let o_tte = &t_te
+        " Turn off screen switching
+        set t_ti= t_te=
+        " Set shell to something sane (zsh, doesn't allow to override files using
+        " > redirection, issue #24, hopefully POSIX sh works everywhere)
+        let o_shell = &shell
+        set shell=sh
+        call <sid>Init()
+        return [o_srr, o_ar, o_tti, o_tte, o_shell]
     else
-    " Make sure, persistent undo information is written
-    " but only for valid files and not empty ones
-    let file=substitute(expand("%"), '^sudo:', '', '')
-    try
-        if has("persistent_undo")
-        let undofile = undofile(file)
-        if !empty(file) &&
-            \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
-            \ &l:udf
-            if !a:readflag
-            " Force reading in the buffer to avoid stupid W13 warning
-            " don't do this in GUI mode, so one does not have to enter
-            " the password again (Leave the W13 warning)
-            if !has("gui_running") && exists("s:new_file") && s:new_file
-                "sil call <sid>SudoRead(file)
-                " Be careful, :e! within a BufWriteCmd can crash Vim!
-                exe "e!" file
-            endif
-            if empty(glob(undofile)) &&
-                \ &undodir =~ '^\.\($\|,\)'
-                " Can't create undofile
-                call add(s:msg, "Can't create undofile in current " .
-                \ "directory, skipping writing undofiles!")
-                throw "sudo:undofileError"
-            endif
-            call <sid>Exec("wundo! ". fnameescape(undofile(file)))
-            if empty(glob(fnameescape(undofile(file))))
-                " Writing undofile not possible 
-                call add(s:msg,  "Error occured, when writing undofile")
-                return
-            endif
-            if <sid>is("unix") && !empty(undofile)
-                let ufile = string(shellescape(undofile, 1))
-                let perm = system("stat -c '%u:%g' " .
-                    \ shellescape(file, 1))[:-2]
-                " Make sure, undo file is readable for current user
-                let cmd  = printf("!%s sh -c 'test -f %s && ".
-                    \ "chown %s -- %s && ",
-                    \ join(s:AuthTool, ' '), ufile, perm, ufile)
-                let cmd .= printf("chmod a+r -- %s 2>%s'", ufile, shellescape(s:error_file))
-                if has("gui_running")
-                call <sid>echoWarn("Enter password again for".
-                    \ " setting permissions of the undofile")
+        " Make sure, persistent undo information is written
+        " but only for valid files and not empty ones
+        let file=substitute(expand("%"), '^sudo:', '', '')
+        try
+            if has("persistent_undo")
+            let undofile = undofile(file)
+            if !empty(file) &&
+                \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
+                \ &l:udf
+                if !a:readflag
+                " Force reading in the buffer to avoid stupid W13 warning
+                " don't do this in GUI mode, so one does not have to enter
+                " the password again (Leave the W13 warning)
+                if !has("gui_running") && exists("s:new_file") && s:new_file
+                    "sil call <sid>SudoRead(file)
+                    " Be careful, :e! within a BufWriteCmd can crash Vim!
+                    exe "e!" file
                 endif
-                call <sid>Exec(cmd)
-                "call system(cmd)
+                if empty(glob(undofile)) &&
+                    \ &undodir =~ '^\.\($\|,\)'
+                    " Can't create undofile
+                    call add(s:msg, "Can't create undofile in current " .
+                    \ "directory, skipping writing undofiles!")
+                    throw "sudo:undofileError"
+                endif
+                call <sid>Exec("wundo! ". fnameescape(undofile(file)))
+                if empty(glob(fnameescape(undofile(file))))
+                    " Writing undofile not possible 
+                    call add(s:msg,  "Error occured, when writing undofile")
+                    return
+                endif
+                if <sid>is("unix") && !empty(undofile)
+                    let ufile = string(shellescape(undofile, 1))
+                    let perm = system("stat -c '%u:%g' " .
+                        \ shellescape(file, 1))[:-2]
+                    " Make sure, undo file is readable for current user
+                    let cmd  = printf("!%s sh -c 'test -f %s && ".
+                        \ "chown %s -- %s && ",
+                        \ join(s:AuthTool, ' '), ufile, perm, ufile)
+                    let cmd .= printf("chmod a+r -- %s 2>%s'", ufile, shellescape(s:error_file))
+                    if has("gui_running")
+                        call <sid>echoWarn("Enter password again for".
+                            \ " setting permissions of the undofile")
+                    endif
+                    call <sid>Exec(cmd)
+                    "call system(cmd)
+                endif
+                endif
             endif
-            endif
-        endif
-        endif " has("persistent_undo")
-    catch
-        " no-op
-    finally
-        " Make sure W11 warning is triggered and consumed by 'ar' setting
-        checktime
-        " Reset old settings
-        " shellredirection
-        let &srr  = a:values[0]
-        " Screen switchting codes
-        let [ &t_ti, &t_te ] = a:values[2:3]
-        " Reset autoread option
-        let &l:ar = a:values[1]
-    endtry
+            endif " has("persistent_undo")
+        catch
+            " no-op
+        finally
+            " Make sure W11 warning is triggered and consumed by 'ar' setting
+            checktime
+            " Reset old settings
+            " shellredirection
+            let &srr  = a:values[0]
+            " Screen switchting codes, and shell
+            let [ &t_ti, &t_te, &shell ] = a:values[2:4]
+            " Reset autoread option
+            let &l:ar = a:values[1]
+        endtry
     endif
 endfu
 
