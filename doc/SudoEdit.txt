@@ -161,6 +161,14 @@ Alternatively, it should be possible to setup SudoEdit to use the ShellRunAs,
 sudowin or the Surun command and configuring the plugin using the |g:sudoAuth|
 and |g:sudoAuthArg| variables.
 
+If you need to use a different administrator account for Windows, I suggest
+that you set the |g:sudoAuthArg| variable, e.g. setting: >
+
+    :let g:sudoAuthArg = '/noprofile /user:\"AdminUser@MyDomain\"'
+
+to let SudoEdit use the AdminUser within the domain MyDomain for administrator
+access.
+
 For further help on this topic see those links:
 
 runas:
@@ -257,6 +265,8 @@ third line of this document.
 	      commands (issue #20 reported by Daniel Hahler, thanks!)
 	    - Fix error in VimLeave autocommand (issue #22, reported by Daniel
 	      Hahler, thanks!)
+	    - reset 'shell' value (issue #24, reported by Raghavendra Prabhu,
+	      thanks!)
 	0.18: Feb 16, 2013 "{{{1
 	    - expand() may return empty filenames (issue #17
 	      patch by Daniel Hahler, thanks!)
