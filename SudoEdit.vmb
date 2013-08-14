@@ -2,15 +2,15 @@
 UseVimball
 finish
 autoload/SudoEdit.vim	[[[1
-461
+468
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.18
+" Version:  0.19
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Sat, 16 Feb 2013 23:15:51 +0100
+" Last Change: Wed, 14 Aug 2013 22:29:27 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 18 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 19 :AutoInstall: SudoEdit.vim
 
 " Functions: "{{{1
 
@@ -79,7 +79,7 @@ fu! <sid>Init() "{{{2
         call <sid>SudoAskPasswd()
         call add(s:AuthTool, s:sudoAuthArg . " ")
         if !exists("s:error_dir")
-            let s:error_dir = shellescape(tempname())
+            let s:error_dir = tempname()
             call <sid>Mkdir(s:error_dir)
             let s:error_file = s:error_dir. '/error'
             if <sid>Is("win")
@@ -94,97 +94,104 @@ endfu
 
 fu! <sid>Mkdir(dir) "{{{2
     " First remove the directory, it might still be there from last call
-    call SudoEdit#Rmdir(a:dir)
-    call system("mkdir ". a:dir)
+    let dir = shellescape(a:dir)
+    call SudoEdit#Rmdir(dir)
+    call system("mkdir ". dir)
     " Clean up on Exit
     if !exists('#SudoEditExit#VimLeave')
         augroup SudoEditExit
             au!
             " Clean up when quitting Vim
-            exe "au VimLeave * :call SudoEdit#Rmdir('".a:dir. "')"
+            exe "au VimLeave * :call SudoEdit#Rmdir(".dir. ")"
         augroup END
     endif
 endfu
 
 fu! <sid>LocalSettings(values, readflag) "{{{2
     if empty(a:values)
-    " Set shellrediraction temporarily
-    " This is used to get su working right!
-    let o_srr = &srr
-    " avoid W11 warning
-    let o_ar  = &l:ar
-    let &srr = '>'
-    setl ar
-    let o_tti = &t_ti
-    let o_tte = &t_te
-    " Turn off screen switching
-    set t_ti= t_te=
-    call <sid>Init()
-    return [o_srr, o_ar, o_tti, o_tte]
-    else
-    " Make sure, persistent undo information is written
-    " but only for valid files and not empty ones
-    let file=substitute(expand("%"), '^sudo:', '', '')
-    try
-        if has("persistent_undo")
-        let undofile = undofile(file)
-        if !empty(file) &&
-            \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
-            \ &l:udf
-            if !a:readflag
-            " Force reading in the buffer to avoid stupid W13 warning
-            " don't do this in GUI mode, so one does not have to enter
-            " the password again (Leave the W13 warning)
-            if !has("gui_running") && s:new_file
-                "sil call <sid>SudoRead(file)
-                " Be careful, :e! within a BufWriteCmd can crash Vim!
-                exe "e!" file
-            endif
-            if empty(glob(undofile)) &&
-                \ &undodir =~ '^\.\($\|,\)'
-                " Can't create undofile
-                call add(s:msg, "Can't create undofile in current " .
-                \ "directory, skipping writing undofiles!")
-                throw "sudo:undofileError"
-            endif
-            call <sid>Exec("wundo! ". fnameescape(undofile(file)))
-            if empty(glob(fnameescape(undofile(file))))
-                " Writing undofile not possible 
-                call add(s:msg,  "Error occured, when writing undofile")
-                return
-            endif
-            if <sid>is("unix") && !empty(undofile)
-                let ufile = string(shellescape(undofile, 1))
-                let perm = system("stat -c '%u:%g' " .
-                    \ shellescape(file, 1))[:-2]
-                " Make sure, undo file is readable for current user
-                let cmd  = printf("!%s sh -c 'test -f %s && ".
-                    \ "chown %s -- %s && ",
-                    \ join(s:AuthTool, ' '), ufile, perm, ufile)
-                let cmd .= printf("chmod a+r -- %s 2>%s'", ufile, s:error_file)
-                if has("gui_running")
-                call <sid>echoWarn("Enter password again for".
-                    \ " setting permissions of the undofile")
-                endif
-                call <sid>Exec(cmd)
-                "call system(cmd)
-            endif
-            endif
+        " Set shellrediraction temporarily
+        " This is used to get su working right!
+        let o_srr = &srr
+        " avoid W11 warning
+        let o_ar  = &l:ar
+        let &srr = '>'
+        setl ar
+        let o_tti = &t_ti
+        let o_tte = &t_te
+        " Turn off screen switching
+        set t_ti= t_te=
+        " Set shell to something sane (zsh, doesn't allow to override files using
+        " > redirection, issue #24, hopefully POSIX sh works everywhere)
+        let o_shell = &shell
+        if !<sid>Is("win")
+            set shell=sh
         endif
-        endif " has("persistent_undo")
-    catch
-        " no-op
-    finally
-        " Make sure W11 warning is triggered and consumed by 'ar' setting
-        checktime
-        " Reset old settings
-        " shellredirection
-        let &srr  = a:values[0]
-        " Screen switchting codes
-        let [ &t_ti, &t_te ] = a:values[2:3]
-        " Reset autoread option
-        let &l:ar = a:values[1]
-    endtry
+        call <sid>Init()
+        return [o_srr, o_ar, o_tti, o_tte, o_shell]
+    else
+        " Make sure, persistent undo information is written
+        " but only for valid files and not empty ones
+        let file=substitute(expand("%"), '^sudo:', '', '')
+        try
+            if has("persistent_undo")
+            let undofile = undofile(file)
+            if !empty(file) &&
+                \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
+                \ &l:udf
+                if !a:readflag
+                " Force reading in the buffer to avoid stupid W13 warning
+                " don't do this in GUI mode, so one does not have to enter
+                " the password again (Leave the W13 warning)
+                if !has("gui_running") && exists("s:new_file") && s:new_file
+                    "sil call <sid>SudoRead(file)
+                    " Be careful, :e! within a BufWriteCmd can crash Vim!
+                    exe "e!" file
+                endif
+                if empty(glob(undofile)) &&
+                    \ &undodir =~ '^\.\($\|,\)'
+                    " Can't create undofile
+                    call add(s:msg, "Can't create undofile in current " .
+                    \ "directory, skipping writing undofiles!")
+                    throw "sudo:undofileError"
+                endif
+                call <sid>Exec("wundo! ". fnameescape(undofile(file)))
+                if empty(glob(fnameescape(undofile(file))))
+                    " Writing undofile not possible 
+                    call add(s:msg,  "Error occured, when writing undofile")
+                    return
+                endif
+                if <sid>is("unix") && !empty(undofile)
+                    let ufile = string(shellescape(undofile, 1))
+                    let perm = system("stat -c '%u:%g' " .
+                        \ shellescape(file, 1))[:-2]
+                    " Make sure, undo file is readable for current user
+                    let cmd  = printf("!%s sh -c 'test -f %s && ".
+                        \ "chown %s -- %s && ",
+                        \ join(s:AuthTool, ' '), ufile, perm, ufile)
+                    let cmd .= printf("chmod a+r -- %s 2>%s'", ufile, shellescape(s:error_file))
+                    if has("gui_running")
+                        call <sid>echoWarn("Enter password again for".
+                            \ " setting permissions of the undofile")
+                    endif
+                    call <sid>Exec(cmd)
+                    "call system(cmd)
+                endif
+                endif
+            endif
+            endif " has("persistent_undo")
+        catch
+            " no-op
+        finally
+            " Make sure W11 warning is triggered and consumed by 'ar' setting
+            checktime
+            " Reset old settings
+            " shellredirection
+            let &srr  = a:values[0]
+            " Screen switchting codes, and shell
+            let [ &t_ti, &t_te, &shell ] = a:values[2:4]
+            " Reset autoread option
+            let &l:ar = a:values[1]
+        endtry
     endif
 endfu
 
@@ -214,7 +221,7 @@ fu! <sid>SudoRead(file) "{{{2
             \ ' '. s:writable_file.  ' '.
             \ join(s:AuthTool, ' ')
     else
-        let cmd='cat ' . shellescape(a:file,1) . ' 2>'. s:error_file
+        let cmd='cat ' . shellescape(a:file,1) . ' 2>'. shellescape(s:error_file)
         if  s:AuthTool[0] =~ '^su$'
             let cmd='"' . cmd . '" --'
         endif
@@ -257,7 +264,7 @@ fu! <sid>SudoWrite(file) range "{{{2
             let cmd= '!'. s:dir.'\sudo.cmd dummy write '. shellescape(fnamemodify(a:file, ':p:8')).
                 \ ' '. s:writable_file. ' '. join(s:AuthTool, ' ')
         else
-            let cmd=printf('tee >/dev/null 2>%s %s',s:error_file, shellescape(a:file,1))
+            let cmd=printf('tee >/dev/null 2>%s %s',shellescape(s:error_file), shellescape(a:file,1))
             let cmd=a:firstline . ',' . a:lastline . 'w !' .
             \ join(s:AuthTool, ' ') . cmd
         endif
@@ -369,7 +376,7 @@ endfu
 fu! <sid>Exec(cmd) "{{{2
     let cmd = a:cmd
     if exists("g:sudoDebug") && g:sudoDebug
-        let cmd = substitute(a:cmd, '2>'.s:error_file, '', 'g')
+        let cmd = substitute(a:cmd, '2>'.shellescape(s:error_file), '', 'g')
         let cmd = 'verb '. cmd
         call <sid>echoWarn(cmd)
         exe cmd
@@ -428,12 +435,12 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
             if !&mod || !empty(a:force)
                 call <sid>SudoRead(file)
             else
-                call <sid>echoWarn("Buffer modified, not reloading!")
+                call add(s:msg, "Buffer modified, not reloading!")
                 return
             endif
         else
-            if !&mod && empty(a:force)
-                call <sid>echoWarn("Buffer not modified, not writing!")
+            if !&mod && empty(a:force) && empty(a:file)
+                call add(s:msg, "Buffer not modified, not writing!")
                 return
             endif
             exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite(file)'
@@ -465,32 +472,32 @@ endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 ts=4 sts=4 sw=4 et:  }}}
 doc/SudoEdit.txt	[[[1
-346
-*SudoEdit.txt*	Edit Files using Sudo/su
+363
+*SudoEdit.txt*  Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.18 Sat, 16 Feb 2013 23:15:51 +0100
-Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
+Version: Vers 0.19 Wed, 14 Aug 2013 22:29:27 +0200
+Copyright: (c) 2009-2013 by Christian Brabandt               *SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
-	   NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK.
+           NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK.
 
 
 ==============================================================================
-1. Contents				*SudoEdit* *SudoEdit-contents*
+1. Contents                             *SudoEdit* *SudoEdit-contents*
 
-	1.  Contents......................................: |SudoEdit-contents|
-	2.  SudoEdit Manual...............................: |SudoEdit-manual|
-	  1 SudoEdit: SudoRead............................: |SudoRead|
-	  2 SudoEdit: SudoWrite...........................: |SudoWrite|
-	3.  SudoEdit Configuration........................: |SudoEdit-config|
-	  1 SudoEdit on Windows...........................: |SudoEdit-Win|
+        1.  Contents......................................: |SudoEdit-contents|
+        2.  SudoEdit Manual...............................: |SudoEdit-manual|
+          1 SudoEdit: SudoRead............................: |SudoRead|
+          2 SudoEdit: SudoWrite...........................: |SudoWrite|
+        3.  SudoEdit Configuration........................: |SudoEdit-config|
+          1 SudoEdit on Windows...........................: |SudoEdit-Win|
         4.  SudoEdit Debugging............................: |SudoEdit-debug|
         5.  SudoEdit F.A.Q................................: |SudoEdit-faq|
-	6.  SudoEdit History..............................: |SudoEdit-history|
+        6.  SudoEdit History..............................: |SudoEdit-history|
 
 ==============================================================================
-2. SudoEdit Manual					*SudoEdit-manual*
+2. SudoEdit Manual                                      *SudoEdit-manual*
 
 Functionality
 
@@ -515,9 +522,9 @@ ssh-gnome-askpass (see |g:sudo_askpass|)
 The SudoEdit Plugin provides 2 Commands:
 
 ==============================================================================
-2.1 SudoRead							 *SudoRead*
+2.1 SudoRead                                                     *SudoRead*
 
-	:SudoRead[!] [file]
+        :SudoRead[!] [file]
 
 SudoRead will read the given file name using any of the configured methods for
 superuser authtication. It basically does something like this: >
@@ -538,9 +545,9 @@ reading and writing using the protocol sudo: So instead of using :SudoRead
 filename completion)
 
 ==============================================================================
-2.2 SudoWrite							 *SudoWrite*
+2.2 SudoWrite                                                    *SudoWrite*
 
-	:[range]SudoWrite[!] [file]
+        :[range]SudoWrite[!] [file]
 
 SudoWrite will write the given file using any of the configured methods for
 superuser authtication. It basically does something like this: >
@@ -557,14 +564,14 @@ be written, if it was modified.
 Again, you can use the protocol handler sudo: for writing.
 
 ==============================================================================
-3. SudoEdit Configuration				*SudoEdit-config* 
+3. SudoEdit Configuration                               *SudoEdit-config*
 
 By default SudoEdit will try to use sudo and if it is not found, it will try
 to use su. Just because SudoEdit finds either sudo or su installed, does not
 mean, that you can already use it. You might have to configure it and of
 course you need to have the credentials for super-user access.
 
-								*g:sudoAuth*
+                                                                *g:sudoAuth*
 
 The tool to use for authentication is can be changed by setting the variable
 g:sudoAuth. If this variable exists, SudoEdit will first try to use the
@@ -575,12 +582,12 @@ g:sudoAuth in your .vimrc as follows: >
 
     let g:sudoAuth="ssh"
 <
-							       *g:sudoAuthArg*
+                                                               *g:sudoAuthArg*
 
 The variable g:sudoAuthArg specifies how to use the given authentication tool.
 You can specify additional parameters that will be used. You could for example
 also define here which user to change to. By default, SudoEdit will try to
-become the superuser e.g. root. 
+become the superuser e.g. root.
 
 If you want to use ssh as authentication facility, you can set g:sudoAuthArg
 as follows in your .vimrc: >
@@ -590,7 +597,7 @@ as follows in your .vimrc: >
 For su, you would use g:sudoAuthArg="-c", but you do not have to set it, the
 plugin will automatically use -c if it detects, that su is used.
 
-					    *g:sudo_no_gui* *g:sudo_askpass*
+                                            *g:sudo_no_gui* *g:sudo_askpass*
 
 If the plugin uses sudo for authenticating and the plugin finds any of
 gnome-ssh-askpass, ksshaskpass or x11-ssh-askpass and a graphical Display
@@ -608,7 +615,7 @@ If you like to disable this, set the variable g:sudo_no_gui, e.g. >
     :let g:sudo_no_gui=1
 
 ==============================================================================
-3.1 SudoEdit on Windows						 *SudoEdit-Win*
+3.1 SudoEdit on Windows                                          *SudoEdit-Win*
 
 It should be possible to use SudoEdit on Windows using the runas command. The
 plugin should by default try to detect when it runs under Windows and either
@@ -619,7 +626,7 @@ command like this: >
     runas /noprofile /user:Administrator "type file"
 
 while elevate would simply use: >
-    
+
     elevate "type file"
 
 This has not yet been tested, but if you have successfully setup SudoEdit on
@@ -628,6 +635,14 @@ Windows, please let me know, so that the procedure can be properly documented.
 Alternatively, it should be possible to setup SudoEdit to use the ShellRunAs,
 sudowin or the Surun command and configuring the plugin using the |g:sudoAuth|
 and |g:sudoAuthArg| variables.
+
+If you need to use a different administrator account for Windows, I suggest
+that you set the |g:sudoAuthArg| variable, e.g. setting: >
+
+    :let g:sudoAuthArg = '/noprofile /user:\"AdminUser@MyDomain\"'
+
+to let SudoEdit use the AdminUser within the domain MyDomain for administrator
+access.
 
 For further help on this topic see those links:
 
@@ -655,7 +670,7 @@ all cases. To make use of UAC set the g:sudoAuth variable to the string "uac":
     :let g:sudoAuth="uac"
 
 ==============================================================================
-4. SudoEdit Debugging					    *SudoEdit-debug*
+4. SudoEdit Debugging                                       *SudoEdit-debug*
 
 You can debug this plugin and the shell code that will be executed by
 setting: >
@@ -665,7 +680,7 @@ setting: >
 This ensures, that debug messages will be appended to the |message-history|.
 
 ==============================================================================
-5. SudoEdit F.A.Q.					    *SudoEdit-faq*
+5. SudoEdit F.A.Q.                                          *SudoEdit-faq*
 
 1) This plugin isn't working, while executing the same commands on the
    shell works fine using sudo.
@@ -717,111 +732,120 @@ Please don't hesitate to report any bugs to the maintainer, mentioned in the
 third line of this document.
 
 ==============================================================================
-6. SudoEdit History					    *SudoEdit-history*
-	0.18: Feb 16, 2013 "{{{1
-	    - expand() may return empty filenames (issue #17
-	      patch by Daniel Hahler, thanks!)
-	    - better exception handling (issue #19)
-	    - included sudo.cmd for better usage on Windows
-	    - enable sudo.cmd to use UAC optionally
-	0.17: Aug 20, 2012 "{{{1
-	    - Guard against a vim without persistent_undo feature
-	    - fix variable typo
-	      (https://github.com/chrisbra/SudoEdit.vim/pull/16
-	      patch by NagatoPain, thanks!)
-	0.16: May 17, 2012 "{{{1
-	    - Make the plugin usable on Windows |SudoEdit-Win|
-	0.15: May 08, 2012 "{{{1
-	    - fix Syntax error (reported by Gary Johnson, thanks!)
-	0.14: Apr 30, 2012 "{{{1
-	    - fix issue #15
-	      (https://github.com/chrisbra/SudoEdit.vim/issues/15
-	      reported by Lenin Lee, thanks!)
-	0.13: Apr 28, 2012 "{{{1
-	    - in graphical Vim, display messages, so one knows, that one needs
-	      to enter the password (reported by Rob Shinn, thanks!)
-	    - Allow bang attribute to |SudoRead| and |SudoWrite|
-	    - Make use of graphical dialogs for sudo to read the passwords, if
-	      possible
-	    - Better debugging
-	    - Code cleanup
-	    - better filename completion with :SudoRead/SudoWrite (now also
-	      supports completing sudo: protocol handler)
-	0.12: Jan 31, 2012 "{{{1
-	    - Avoid redraw when changing permissions of the undofile
-	    - Don't move cursor on Reading/Writing
-	      (issue https://github.com/chrisbra/SudoEdit.vim/issues/11,
-	      reported by Daniel Hahler, Thanks!)
-	    - Support for calling Netrw with another userid/password
-	      (issue https://github.com/chrisbra/SudoEdit.vim/issues/4,
-	      reported by Daniel Hahler, Thanks!)
-	    - Autocmds for Writing did not fire (issue
-	      https://github.com/chrisbra/SudoEdit.vim/issues/10, partly by
-	      Raghavendra D Prabhu, Thanks!)
-	    - Newly created files are not set 'nomodified' (issue
-	      https://github.com/chrisbra/SudoEdit.vim/issues/12, reported by
-	      Daniel Hahler, Thanks!)
-	    - Can't create undofiles in write-protected directories (issue 
-	      https://github.com/chrisbra/SudoEdit.vim/issues/14, reported by
-	      Matias Kangasjärvelä, Thanks!)
-	0.11: Dec 15, 2011 "{{{1
-	    -change owner of undofile to that of the edited super-user file,
-	     so vim will automatically load the undofile when opening that
-	     file the next time (reported by Sean Farley and blueyed, thanks!)
-	    -Only set the filename using :f when writing to another file
-	     (https://github.com/chrisbra/SudoEdit.vim/pull/8 and also
-	      https://github.com/chrisbra/SudoEdit.vim/issues/5 patch by
-	      Daniel Hahler, thanks!)
-	     -fix https://github.com/chrisbra/SudoEdit.vim/issues/6
-	     (fix permissions and path of the undofile, partly by Daniel
-	      Hahler, thanks!)
-	    -Don't reread the file and write undofiles for empty files
-	     (https://github.com/chrisbra/SudoEdit.vim/issues/7 reported by
-	     Daniel Hahler, thanks!)
-	0.10: Nov 18, 2011 "{{{1
-	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/1
-	     (exception "emptyfile" not caught, reported by Daniel Hahler,
-	     thanks!)
-	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/2
-	     (Avoid W13 error, reported by Daniel Hahler, thanks!)
-	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/3
-	     (Write undofiles, reported by Daniel Hahler, thanks!)
-	0.8: Apr  20, 2010 "{{{1
-	    - Made plugin autoloadable so the code is only loaded,
-	      when necessary
-	0.7: Oct  26, 2009 "{{{1
-	    - Support for reading/writing using sudo: protocol handler
-	    - Added Debugging capabilities
-	0.6: July 14, 2009 "{{{1
-	    - Fix minor bug, that prevents setting the filename correctly
-	      when writing.
-	0.5: July 08, 2009 "{{{1
-	    - Enables the plugin for |GetLatestVimScripts|
-	0.4: July 08, 2009 "{{{1
-	    - First release
-	    - Added Documentation
-	0.3: July 07, 2009 "{{{1
-	    - Internal version, added su support
-	    - Added configuration variables
-	0.2: July 07, 2009 "{{{1
-	    - Internal version, Working sudo support
-	    - Created plugin
-	0.1: July 07, 2009 "{{{1
-	    - Internal version, First working version, using simple commands
+6. SudoEdit History                                         *SudoEdit-history*
+        0.19: Aug 14, 2013 "{{{1
+            - |SudoWrite| should always write if a filename has been given
+              (issue #23, reported by Daniel Hahler, thanks!)
+            - Better filename completion for |SudoWrite| and |SudoRead|
+              commands (issue #20 reported by Daniel Hahler, thanks!)
+            - Fix error in VimLeave autocommand (issue #22, reported by Daniel
+              Hahler, thanks!)
+            - reset 'shell' value (issue #24, reported by Raghavendra Prabhu,
+              thanks!)
+        0.18: Feb 16, 2013 "{{{1
+            - expand() may return empty filenames (issue #17
+              patch by Daniel Hahler, thanks!)
+            - better exception handling (issue #19)
+            - included sudo.cmd for better usage on Windows
+            - enable sudo.cmd to use UAC optionally
+        0.17: Aug 20, 2012 "{{{1
+            - Guard against a vim without persistent_undo feature
+            - fix variable typo
+              (https://github.com/chrisbra/SudoEdit.vim/pull/16
+              patch by NagatoPain, thanks!)
+        0.16: May 17, 2012 "{{{1
+            - Make the plugin usable on Windows |SudoEdit-Win|
+        0.15: May 08, 2012 "{{{1
+            - fix Syntax error (reported by Gary Johnson, thanks!)
+        0.14: Apr 30, 2012 "{{{1
+            - fix issue #15
+              (https://github.com/chrisbra/SudoEdit.vim/issues/15
+              reported by Lenin Lee, thanks!)
+        0.13: Apr 28, 2012 "{{{1
+            - in graphical Vim, display messages, so one knows, that one needs
+              to enter the password (reported by Rob Shinn, thanks!)
+            - Allow bang attribute to |SudoRead| and |SudoWrite|
+            - Make use of graphical dialogs for sudo to read the passwords, if
+              possible
+            - Better debugging
+            - Code cleanup
+            - better filename completion with :SudoRead/SudoWrite (now also
+              supports completing sudo: protocol handler)
+        0.12: Jan 31, 2012 "{{{1
+            - Avoid redraw when changing permissions of the undofile
+            - Don't move cursor on Reading/Writing
+              (issue https://github.com/chrisbra/SudoEdit.vim/issues/11,
+              reported by Daniel Hahler, Thanks!)
+            - Support for calling Netrw with another userid/password
+              (issue https://github.com/chrisbra/SudoEdit.vim/issues/4,
+              reported by Daniel Hahler, Thanks!)
+            - Autocmds for Writing did not fire (issue
+              https://github.com/chrisbra/SudoEdit.vim/issues/10, partly by
+              Raghavendra D Prabhu, Thanks!)
+            - Newly created files are not set 'nomodified' (issue
+              https://github.com/chrisbra/SudoEdit.vim/issues/12, reported by
+              Daniel Hahler, Thanks!)
+            - Can't create undofiles in write-protected directories (issue
+              https://github.com/chrisbra/SudoEdit.vim/issues/14, reported by
+              Matias Kangasjärvelä, Thanks!)
+        0.11: Dec 15, 2011 "{{{1
+            -change owner of undofile to that of the edited super-user file,
+             so vim will automatically load the undofile when opening that
+             file the next time (reported by Sean Farley and blueyed, thanks!)
+            -Only set the filename using :f when writing to another file
+             (https://github.com/chrisbra/SudoEdit.vim/pull/8 and also
+              https://github.com/chrisbra/SudoEdit.vim/issues/5 patch by
+              Daniel Hahler, thanks!)
+             -fix https://github.com/chrisbra/SudoEdit.vim/issues/6
+             (fix permissions and path of the undofile, partly by Daniel
+              Hahler, thanks!)
+            -Don't reread the file and write undofiles for empty files
+             (https://github.com/chrisbra/SudoEdit.vim/issues/7 reported by
+             Daniel Hahler, thanks!)
+        0.10: Nov 18, 2011 "{{{1
+            -fix https://github.com/chrisbra/SudoEdit.vim/issues/1
+             (exception "emptyfile" not caught, reported by Daniel Hahler,
+             thanks!)
+            -fix https://github.com/chrisbra/SudoEdit.vim/issues/2
+             (Avoid W13 error, reported by Daniel Hahler, thanks!)
+            -fix https://github.com/chrisbra/SudoEdit.vim/issues/3
+             (Write undofiles, reported by Daniel Hahler, thanks!)
+        0.8: Apr  20, 2010 "{{{1
+            - Made plugin autoloadable so the code is only loaded,
+              when necessary
+        0.7: Oct  26, 2009 "{{{1
+            - Support for reading/writing using sudo: protocol handler
+            - Added Debugging capabilities
+        0.6: July 14, 2009 "{{{1
+            - Fix minor bug, that prevents setting the filename correctly
+              when writing.
+        0.5: July 08, 2009 "{{{1
+            - Enables the plugin for |GetLatestVimScripts|
+        0.4: July 08, 2009 "{{{1
+            - First release
+            - Added Documentation
+        0.3: July 07, 2009 "{{{1
+            - Internal version, added su support
+            - Added configuration variables
+        0.2: July 07, 2009 "{{{1
+            - Internal version, Working sudo support
+            - Created plugin
+        0.1: July 07, 2009 "{{{1
+            - Internal version, First working version, using simple commands
 
 ==============================================================================
 Modeline: "{{{1
 vim:tw=78:ts=8:ft=help:fdm=marker:fdl=0:norl
 plugin/SudoEdit.vim	[[[1
-83
+84
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.18
+" Version:  0.19
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Sat, 16 Feb 2013 23:15:51 +0100
+" Last Change: Wed, 14 Aug 2013 22:29:27 +0200
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 18 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 19 :AutoInstall: SudoEdit.vim
 " Documentation: see :h SudoEdit.txt
 
 " ---------------------------------------------------------------------
@@ -841,28 +865,29 @@ endif
 " ---------------------------------------------------------------------
 " Functions {{{1
 func! <sid>ExpandFiles(A, L, P) "{{{
-  if a:A =~ '^s\%[udo:]$'
+  if a:A =~ '^s\%[udo]$'
     return [ "sudo:" ]
   endif
   let pat = matchstr(a:A, '^\(s\%[udo:]\)\?\zs.*')
-  let gpat = (pat[0] =~ '[./]' ? pat : '/'.pat). '*'
-  if !empty(pat)
-    " Patch 7.3.465 introduced the list parameter to glob()
-    if v:version > 703 || (v:version == 703 && has('patch465'))
-      let res = glob(gpat, 1, 1)
-    else
-      let res = split(glob(gpat, 1),"\n")
-    endif
-    call filter(res, '!empty(v:val)')
-    call filter(res, 'v:val =~ pat')
-    call map(res, 'isdirectory(v:val) ? v:val.''/'':v:val')
-    if a:A =~ '^s\%[udo:]'
-      call map(res, '''sudo:''.v:val')
-    endif
-    return res
-  else
-    return ''
+  "let gpat = (pat[0] =~ '[./]' ? pat : './'.pat). '*'
+  let gpat = (empty(pat) ? '*' : pat)
+  if gpat !~# '[*?]$'
+    " add star pattern for globbing
+    let gpat .= '*'
   endif
+  " Patch 7.3.465 introduced the list parameter to glob()
+  if v:version > 703 || (v:version == 703 && has('patch465'))
+    let res = glob(gpat, 1, 1)
+  else
+    let res = split(glob(gpat, 1),"\n")
+  endif
+  call filter(res, '!empty(v:val)')
+  call filter(res, 'v:val =~ pat')
+  call map(res, 'isdirectory(v:val) ? v:val.''/'':v:val')
+  if a:A =~ '^s\%[udo:]'
+    call map(res, '''sudo:''.v:val')
+  endif
+  return res
 endfu
 
 " ---------------------------------------------------------------------
@@ -898,7 +923,7 @@ unlet s:keepcpo
 " Modeline {{{1
 " vim: fdm=marker sw=2 sts=2 ts=8 fdl=0
 autoload/sudo.cmd	[[[1
-77
+84
 @echo off
 cls
 
@@ -948,8 +973,12 @@ goto end
 :: Use UAC to elevate rights, idea taken from:
 :: http://stackoverflow.com/questions/7044985/how-can-i-auto-elevate-my-batch-file-so-that-it-requests-from-uac-admin-rights
 :checkPrivileges
-NET FILE 1>NUL 2>NUL
-if '%errorlevel%' == '0' (goto gotPrivileges) else (goto getPrivileges)
+::NET FILE 1>NUL 2>NUL
+set vbs="%temp%\GetPrivileges.vbs"
+
+:: Check if we already have system priviliges
+>NUL 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+if '%errorlevel%' EQU '0' (goto gotPrivileges) else (goto getPrivileges)
 
 :getPrivileges
 echo.
@@ -957,22 +986,25 @@ echo **************************************
 echo Invoking UAC for Privilege Escalation 
 echo **************************************
 
-set vbs="%temp%\GetPrivileges.vbs"
 echo Set UAC = CreateObject^("Shell.Application"^) > %vbs%
 echo UAC.ShellExecute "!batchPath!", "ELEV !mode! "!myfile!" "!newcontent!""   , "", "runas", 1 >> %vbs%
+:: Run VBS script
 %vbs%
-:: Delete dynamic VBScript
-if exist %vbs% del %vbs%
 exit /B 
 
 :gotPrivileges
 ::setlocal & pushd .
+:: Doesn't work?
+if exist %vbs% (del %vbs%)
+pushd "%CD%"
+cd /d "%~dp0"
+
 if '%mode%' == 'write' (
-    type %newcontent% > %myfile%
+    cmd.exe /c type %newcontent% > %myfile%
 ) else (
-    type %myfile% > %newcontent%
+    cmd.exe /c type %myfile% > %newcontent%
 )
 
-if not '%errorlevel%' == 0 echo "An error occured"
+if '%errorlevel%' NEQ 0 echo "An error occured"
 
 :end

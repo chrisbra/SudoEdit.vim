@@ -47,8 +47,12 @@ goto end
 :: Use UAC to elevate rights, idea taken from:
 :: http://stackoverflow.com/questions/7044985/how-can-i-auto-elevate-my-batch-file-so-that-it-requests-from-uac-admin-rights
 :checkPrivileges
-NET FILE 1>NUL 2>NUL
-if '%errorlevel%' == '0' (goto gotPrivileges) else (goto getPrivileges)
+::NET FILE 1>NUL 2>NUL
+set vbs="%temp%\GetPrivileges.vbs"
+
+:: Check if we already have system priviliges
+>NUL 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+if '%errorlevel%' EQU '0' (goto gotPrivileges) else (goto getPrivileges)
 
 :getPrivileges
 echo.
@@ -56,22 +60,25 @@ echo **************************************
 echo Invoking UAC for Privilege Escalation 
 echo **************************************
 
-set vbs="%temp%\GetPrivileges.vbs"
 echo Set UAC = CreateObject^("Shell.Application"^) > %vbs%
 echo UAC.ShellExecute "!batchPath!", "ELEV !mode! "!myfile!" "!newcontent!""   , "", "runas", 1 >> %vbs%
+:: Run VBS script
 %vbs%
-:: Delete dynamic VBScript
-if exist %vbs% del %vbs%
 exit /B 
 
 :gotPrivileges
 ::setlocal & pushd .
+:: Doesn't work?
+if exist %vbs% (del %vbs%)
+pushd "%CD%"
+cd /d "%~dp0"
+
 if '%mode%' == 'write' (
-    type %newcontent% > %myfile%
+    cmd.exe /c type %newcontent% > %myfile%
 ) else (
-    type %myfile% > %newcontent%
+    cmd.exe /c type %myfile% > %newcontent%
 )
 
-if not '%errorlevel%' == 0 echo "An error occured"
+if '%errorlevel%' NEQ 0 echo "An error occured"
 
 :end

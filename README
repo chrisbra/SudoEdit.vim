@@ -1,28 +1,28 @@
-*SudoEdit.txt*	Edit Files using Sudo/su
+*SudoEdit.txt*  Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.18 Sat, 16 Feb 2013 23:15:51 +0100
-Copyright: (c) 2009 by Christian Brabandt 		*SudoEdit-copyright*
+Version: Vers 0.19 Wed, 14 Aug 2013 22:29:27 +0200
+Copyright: (c) 2009-2013 by Christian Brabandt               *SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
-	   NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK.
+           NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK.
 
 
 ==============================================================================
-1. Contents				*SudoEdit* *SudoEdit-contents*
+1. Contents                             *SudoEdit* *SudoEdit-contents*
 
-	1.  Contents......................................: |SudoEdit-contents|
-	2.  SudoEdit Manual...............................: |SudoEdit-manual|
-	  1 SudoEdit: SudoRead............................: |SudoRead|
-	  2 SudoEdit: SudoWrite...........................: |SudoWrite|
-	3.  SudoEdit Configuration........................: |SudoEdit-config|
-	  1 SudoEdit on Windows...........................: |SudoEdit-Win|
+        1.  Contents......................................: |SudoEdit-contents|
+        2.  SudoEdit Manual...............................: |SudoEdit-manual|
+          1 SudoEdit: SudoRead............................: |SudoRead|
+          2 SudoEdit: SudoWrite...........................: |SudoWrite|
+        3.  SudoEdit Configuration........................: |SudoEdit-config|
+          1 SudoEdit on Windows...........................: |SudoEdit-Win|
         4.  SudoEdit Debugging............................: |SudoEdit-debug|
         5.  SudoEdit F.A.Q................................: |SudoEdit-faq|
-	6.  SudoEdit History..............................: |SudoEdit-history|
+        6.  SudoEdit History..............................: |SudoEdit-history|
 
 ==============================================================================
-2. SudoEdit Manual					*SudoEdit-manual*
+2. SudoEdit Manual                                      *SudoEdit-manual*
 
 Functionality
 
@@ -47,9 +47,9 @@ ssh-gnome-askpass (see |g:sudo_askpass|)
 The SudoEdit Plugin provides 2 Commands:
 
 ==============================================================================
-2.1 SudoRead							 *SudoRead*
+2.1 SudoRead                                                     *SudoRead*
 
-	:SudoRead[!] [file]
+        :SudoRead[!] [file]
 
 SudoRead will read the given file name using any of the configured methods for
 superuser authtication. It basically does something like this: >
@@ -70,9 +70,9 @@ reading and writing using the protocol sudo: So instead of using :SudoRead
 filename completion)
 
 ==============================================================================
-2.2 SudoWrite							 *SudoWrite*
+2.2 SudoWrite                                                    *SudoWrite*
 
-	:[range]SudoWrite[!] [file]
+        :[range]SudoWrite[!] [file]
 
 SudoWrite will write the given file using any of the configured methods for
 superuser authtication. It basically does something like this: >
@@ -89,14 +89,14 @@ be written, if it was modified.
 Again, you can use the protocol handler sudo: for writing.
 
 ==============================================================================
-3. SudoEdit Configuration				*SudoEdit-config* 
+3. SudoEdit Configuration                               *SudoEdit-config*
 
 By default SudoEdit will try to use sudo and if it is not found, it will try
 to use su. Just because SudoEdit finds either sudo or su installed, does not
 mean, that you can already use it. You might have to configure it and of
 course you need to have the credentials for super-user access.
 
-								*g:sudoAuth*
+                                                                *g:sudoAuth*
 
 The tool to use for authentication is can be changed by setting the variable
 g:sudoAuth. If this variable exists, SudoEdit will first try to use the
@@ -107,12 +107,12 @@ g:sudoAuth in your .vimrc as follows: >
 
     let g:sudoAuth="ssh"
 <
-							       *g:sudoAuthArg*
+                                                               *g:sudoAuthArg*
 
 The variable g:sudoAuthArg specifies how to use the given authentication tool.
 You can specify additional parameters that will be used. You could for example
 also define here which user to change to. By default, SudoEdit will try to
-become the superuser e.g. root. 
+become the superuser e.g. root.
 
 If you want to use ssh as authentication facility, you can set g:sudoAuthArg
 as follows in your .vimrc: >
@@ -122,7 +122,7 @@ as follows in your .vimrc: >
 For su, you would use g:sudoAuthArg="-c", but you do not have to set it, the
 plugin will automatically use -c if it detects, that su is used.
 
-					    *g:sudo_no_gui* *g:sudo_askpass*
+                                            *g:sudo_no_gui* *g:sudo_askpass*
 
 If the plugin uses sudo for authenticating and the plugin finds any of
 gnome-ssh-askpass, ksshaskpass or x11-ssh-askpass and a graphical Display
@@ -140,7 +140,7 @@ If you like to disable this, set the variable g:sudo_no_gui, e.g. >
     :let g:sudo_no_gui=1
 
 ==============================================================================
-3.1 SudoEdit on Windows						 *SudoEdit-Win*
+3.1 SudoEdit on Windows                                          *SudoEdit-Win*
 
 It should be possible to use SudoEdit on Windows using the runas command. The
 plugin should by default try to detect when it runs under Windows and either
@@ -151,7 +151,7 @@ command like this: >
     runas /noprofile /user:Administrator "type file"
 
 while elevate would simply use: >
-    
+
     elevate "type file"
 
 This has not yet been tested, but if you have successfully setup SudoEdit on
@@ -160,6 +160,14 @@ Windows, please let me know, so that the procedure can be properly documented.
 Alternatively, it should be possible to setup SudoEdit to use the ShellRunAs,
 sudowin or the Surun command and configuring the plugin using the |g:sudoAuth|
 and |g:sudoAuthArg| variables.
+
+If you need to use a different administrator account for Windows, I suggest
+that you set the |g:sudoAuthArg| variable, e.g. setting: >
+
+    :let g:sudoAuthArg = '/noprofile /user:\"AdminUser@MyDomain\"'
+
+to let SudoEdit use the AdminUser within the domain MyDomain for administrator
+access.
 
 For further help on this topic see those links:
 
@@ -187,7 +195,7 @@ all cases. To make use of UAC set the g:sudoAuth variable to the string "uac":
     :let g:sudoAuth="uac"
 
 ==============================================================================
-4. SudoEdit Debugging					    *SudoEdit-debug*
+4. SudoEdit Debugging                                       *SudoEdit-debug*
 
 You can debug this plugin and the shell code that will be executed by
 setting: >
@@ -197,7 +205,7 @@ setting: >
 This ensures, that debug messages will be appended to the |message-history|.
 
 ==============================================================================
-5. SudoEdit F.A.Q.					    *SudoEdit-faq*
+5. SudoEdit F.A.Q.                                          *SudoEdit-faq*
 
 1) This plugin isn't working, while executing the same commands on the
    shell works fine using sudo.
@@ -249,97 +257,106 @@ Please don't hesitate to report any bugs to the maintainer, mentioned in the
 third line of this document.
 
 ==============================================================================
-6. SudoEdit History					    *SudoEdit-history*
-	0.18: Feb 16, 2013 "{{{1
-	    - expand() may return empty filenames (issue #17
-	      patch by Daniel Hahler, thanks!)
-	    - better exception handling (issue #19)
-	    - included sudo.cmd for better usage on Windows
-	    - enable sudo.cmd to use UAC optionally
-	0.17: Aug 20, 2012 "{{{1
-	    - Guard against a vim without persistent_undo feature
-	    - fix variable typo
-	      (https://github.com/chrisbra/SudoEdit.vim/pull/16
-	      patch by NagatoPain, thanks!)
-	0.16: May 17, 2012 "{{{1
-	    - Make the plugin usable on Windows |SudoEdit-Win|
-	0.15: May 08, 2012 "{{{1
-	    - fix Syntax error (reported by Gary Johnson, thanks!)
-	0.14: Apr 30, 2012 "{{{1
-	    - fix issue #15
-	      (https://github.com/chrisbra/SudoEdit.vim/issues/15
-	      reported by Lenin Lee, thanks!)
-	0.13: Apr 28, 2012 "{{{1
-	    - in graphical Vim, display messages, so one knows, that one needs
-	      to enter the password (reported by Rob Shinn, thanks!)
-	    - Allow bang attribute to |SudoRead| and |SudoWrite|
-	    - Make use of graphical dialogs for sudo to read the passwords, if
-	      possible
-	    - Better debugging
-	    - Code cleanup
-	    - better filename completion with :SudoRead/SudoWrite (now also
-	      supports completing sudo: protocol handler)
-	0.12: Jan 31, 2012 "{{{1
-	    - Avoid redraw when changing permissions of the undofile
-	    - Don't move cursor on Reading/Writing
-	      (issue https://github.com/chrisbra/SudoEdit.vim/issues/11,
-	      reported by Daniel Hahler, Thanks!)
-	    - Support for calling Netrw with another userid/password
-	      (issue https://github.com/chrisbra/SudoEdit.vim/issues/4,
-	      reported by Daniel Hahler, Thanks!)
-	    - Autocmds for Writing did not fire (issue
-	      https://github.com/chrisbra/SudoEdit.vim/issues/10, partly by
-	      Raghavendra D Prabhu, Thanks!)
-	    - Newly created files are not set 'nomodified' (issue
-	      https://github.com/chrisbra/SudoEdit.vim/issues/12, reported by
-	      Daniel Hahler, Thanks!)
-	    - Can't create undofiles in write-protected directories (issue 
-	      https://github.com/chrisbra/SudoEdit.vim/issues/14, reported by
-	      Matias Kangasjärvelä, Thanks!)
-	0.11: Dec 15, 2011 "{{{1
-	    -change owner of undofile to that of the edited super-user file,
-	     so vim will automatically load the undofile when opening that
-	     file the next time (reported by Sean Farley and blueyed, thanks!)
-	    -Only set the filename using :f when writing to another file
-	     (https://github.com/chrisbra/SudoEdit.vim/pull/8 and also
-	      https://github.com/chrisbra/SudoEdit.vim/issues/5 patch by
-	      Daniel Hahler, thanks!)
-	     -fix https://github.com/chrisbra/SudoEdit.vim/issues/6
-	     (fix permissions and path of the undofile, partly by Daniel
-	      Hahler, thanks!)
-	    -Don't reread the file and write undofiles for empty files
-	     (https://github.com/chrisbra/SudoEdit.vim/issues/7 reported by
-	     Daniel Hahler, thanks!)
-	0.10: Nov 18, 2011 "{{{1
-	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/1
-	     (exception "emptyfile" not caught, reported by Daniel Hahler,
-	     thanks!)
-	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/2
-	     (Avoid W13 error, reported by Daniel Hahler, thanks!)
-	    -fix https://github.com/chrisbra/SudoEdit.vim/issues/3
-	     (Write undofiles, reported by Daniel Hahler, thanks!)
-	0.8: Apr  20, 2010 "{{{1
-	    - Made plugin autoloadable so the code is only loaded,
-	      when necessary
-	0.7: Oct  26, 2009 "{{{1
-	    - Support for reading/writing using sudo: protocol handler
-	    - Added Debugging capabilities
-	0.6: July 14, 2009 "{{{1
-	    - Fix minor bug, that prevents setting the filename correctly
-	      when writing.
-	0.5: July 08, 2009 "{{{1
-	    - Enables the plugin for |GetLatestVimScripts|
-	0.4: July 08, 2009 "{{{1
-	    - First release
-	    - Added Documentation
-	0.3: July 07, 2009 "{{{1
-	    - Internal version, added su support
-	    - Added configuration variables
-	0.2: July 07, 2009 "{{{1
-	    - Internal version, Working sudo support
-	    - Created plugin
-	0.1: July 07, 2009 "{{{1
-	    - Internal version, First working version, using simple commands
+6. SudoEdit History                                         *SudoEdit-history*
+        0.19: Aug 14, 2013 "{{{1
+            - |SudoWrite| should always write if a filename has been given
+              (issue #23, reported by Daniel Hahler, thanks!)
+            - Better filename completion for |SudoWrite| and |SudoRead|
+              commands (issue #20 reported by Daniel Hahler, thanks!)
+            - Fix error in VimLeave autocommand (issue #22, reported by Daniel
+              Hahler, thanks!)
+            - reset 'shell' value (issue #24, reported by Raghavendra Prabhu,
+              thanks!)
+        0.18: Feb 16, 2013 "{{{1
+            - expand() may return empty filenames (issue #17
+              patch by Daniel Hahler, thanks!)
+            - better exception handling (issue #19)
+            - included sudo.cmd for better usage on Windows
+            - enable sudo.cmd to use UAC optionally
+        0.17: Aug 20, 2012 "{{{1
+            - Guard against a vim without persistent_undo feature
+            - fix variable typo
+              (https://github.com/chrisbra/SudoEdit.vim/pull/16
+              patch by NagatoPain, thanks!)
+        0.16: May 17, 2012 "{{{1
+            - Make the plugin usable on Windows |SudoEdit-Win|
+        0.15: May 08, 2012 "{{{1
+            - fix Syntax error (reported by Gary Johnson, thanks!)
+        0.14: Apr 30, 2012 "{{{1
+            - fix issue #15
+              (https://github.com/chrisbra/SudoEdit.vim/issues/15
+              reported by Lenin Lee, thanks!)
+        0.13: Apr 28, 2012 "{{{1
+            - in graphical Vim, display messages, so one knows, that one needs
+              to enter the password (reported by Rob Shinn, thanks!)
+            - Allow bang attribute to |SudoRead| and |SudoWrite|
+            - Make use of graphical dialogs for sudo to read the passwords, if
+              possible
+            - Better debugging
+            - Code cleanup
+            - better filename completion with :SudoRead/SudoWrite (now also
+              supports completing sudo: protocol handler)
+        0.12: Jan 31, 2012 "{{{1
+            - Avoid redraw when changing permissions of the undofile
+            - Don't move cursor on Reading/Writing
+              (issue https://github.com/chrisbra/SudoEdit.vim/issues/11,
+              reported by Daniel Hahler, Thanks!)
+            - Support for calling Netrw with another userid/password
+              (issue https://github.com/chrisbra/SudoEdit.vim/issues/4,
+              reported by Daniel Hahler, Thanks!)
+            - Autocmds for Writing did not fire (issue
+              https://github.com/chrisbra/SudoEdit.vim/issues/10, partly by
+              Raghavendra D Prabhu, Thanks!)
+            - Newly created files are not set 'nomodified' (issue
+              https://github.com/chrisbra/SudoEdit.vim/issues/12, reported by
+              Daniel Hahler, Thanks!)
+            - Can't create undofiles in write-protected directories (issue
+              https://github.com/chrisbra/SudoEdit.vim/issues/14, reported by
+              Matias Kangasjärvelä, Thanks!)
+        0.11: Dec 15, 2011 "{{{1
+            -change owner of undofile to that of the edited super-user file,
+             so vim will automatically load the undofile when opening that
+             file the next time (reported by Sean Farley and blueyed, thanks!)
+            -Only set the filename using :f when writing to another file
+             (https://github.com/chrisbra/SudoEdit.vim/pull/8 and also
+              https://github.com/chrisbra/SudoEdit.vim/issues/5 patch by
+              Daniel Hahler, thanks!)
+             -fix https://github.com/chrisbra/SudoEdit.vim/issues/6
+             (fix permissions and path of the undofile, partly by Daniel
+              Hahler, thanks!)
+            -Don't reread the file and write undofiles for empty files
+             (https://github.com/chrisbra/SudoEdit.vim/issues/7 reported by
+             Daniel Hahler, thanks!)
+        0.10: Nov 18, 2011 "{{{1
+            -fix https://github.com/chrisbra/SudoEdit.vim/issues/1
+             (exception "emptyfile" not caught, reported by Daniel Hahler,
+             thanks!)
+            -fix https://github.com/chrisbra/SudoEdit.vim/issues/2
+             (Avoid W13 error, reported by Daniel Hahler, thanks!)
+            -fix https://github.com/chrisbra/SudoEdit.vim/issues/3
+             (Write undofiles, reported by Daniel Hahler, thanks!)
+        0.8: Apr  20, 2010 "{{{1
+            - Made plugin autoloadable so the code is only loaded,
+              when necessary
+        0.7: Oct  26, 2009 "{{{1
+            - Support for reading/writing using sudo: protocol handler
+            - Added Debugging capabilities
+        0.6: July 14, 2009 "{{{1
+            - Fix minor bug, that prevents setting the filename correctly
+              when writing.
+        0.5: July 08, 2009 "{{{1
+            - Enables the plugin for |GetLatestVimScripts|
+        0.4: July 08, 2009 "{{{1
+            - First release
+            - Added Documentation
+        0.3: July 07, 2009 "{{{1
+            - Internal version, added su support
+            - Added configuration variables
+        0.2: July 07, 2009 "{{{1
+            - Internal version, Working sudo support
+            - Created plugin
+        0.1: July 07, 2009 "{{{1
+            - Internal version, First working version, using simple commands
 
 ==============================================================================
 Modeline: "{{{1
