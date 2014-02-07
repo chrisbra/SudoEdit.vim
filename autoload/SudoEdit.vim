@@ -211,6 +211,13 @@ fu! <sid>echoWarn(mess) "{{{2
     echohl Normal
 endfu
 
+fu! <sid>Path(cmd) "{{{2
+    if exists("g:sudo_{a:cmd}")
+        return g:sudo_{a:cmd}
+    endif
+    return a:cmd
+endfu
+
 fu! <sid>SudoRead(file) "{{{2
     sil %d _
     if <sid>Is("win")
@@ -262,7 +269,8 @@ fu! <sid>SudoWrite(file) range "{{{2
             let cmd= '!'. s:dir.'\sudo.cmd dummy write '. shellescape(fnamemodify(a:file, ':p:8')).
                 \ ' '. s:writable_file. ' '. join(s:AuthTool, ' ')
         else
-            let cmd=printf('tee >/dev/null 2>%s %s',shellescape(s:error_file), shellescape(a:file,1))
+            let cmd=printf('%s >/dev/null 2>%s %s', <sid>Path('tee'),
+                \ shellescape(s:error_file), shellescape(a:file,1))
             let cmd=a:firstline . ',' . a:lastline . 'w !' .
             \ join(s:AuthTool, ' ') . cmd
         endif
