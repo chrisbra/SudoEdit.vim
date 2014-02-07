@@ -128,6 +128,9 @@ fu! <sid>LocalSettings(values, readflag) "{{{2
         " but only for valid files and not empty ones
         let file=substitute(expand("%"), '^sudo:', '', '')
         try
+            if exists("s:skip_wundo") && s:skip_wundo = 1
+                return
+            endif
             if has("persistent_undo")
             let undofile = undofile(file)
             if !empty(file) &&
@@ -431,12 +434,12 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
                 call <sid>SudoRead(file)
             else
                 call add(s:msg, "Buffer modified, not reloading!")
-                return
+                throw "sudo:BufferNotModified"
             endif
         else
             if !&mod && empty(a:force) && empty(a:file)
                 call add(s:msg, "Buffer not modified, not writing!")
-                return
+                throw "sudo:BufferNotModified"
             endif
             exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite(file)'
             call add(s:msg, <sid>Stats(file))
@@ -446,6 +449,9 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
         return
     catch /sudo:readError/
         call <sid>Exception("There was an error reading the file ". file. " !")
+        return
+    catch /sudo:BufferNotModified/
+        let s:skip_wundo = 1
         return
     finally
         " Delete temporary file

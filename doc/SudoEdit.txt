@@ -258,6 +258,8 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History                                         *SudoEdit-history*
+	0.20: (unreleased) "{{{1
+	    - skip writing undo, if the buffer hasn't been written.
         0.19: Aug 14, 2013 "{{{1
             - |SudoWrite| should always write if a filename has been given
               (issue #23, reported by Daniel Hahler, thanks!)
