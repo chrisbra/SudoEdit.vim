@@ -300,6 +300,7 @@ fu! <sid>SudoWrite(file) range "{{{2
         if empty(glob(a:file))
             let s:new_file = 1
         endif
+        exe "f" fnameescape(a:file)
         call <sid>Exec(cmd)
     endif
     if v:shell_error
