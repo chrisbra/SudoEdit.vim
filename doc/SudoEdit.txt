@@ -270,6 +270,9 @@ third line of this document.
 	0.20: (unreleased) "{{{1
 	    - skip writing undo, if the buffer hasn't been written.
 	    - document |g:sudo_tee| variable
+	    - possibly wrong undofile was written (issue
+	      https://github.com/chrisbra/SudoEdit.vim/issues/21, reported by
+	      blueyed, thanks!)
         0.19: Aug 14, 2013 "{{{1
             - |SudoWrite| should always write if a filename has been given
               (issue #23, reported by Daniel Hahler, thanks!)

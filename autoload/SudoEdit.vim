@@ -102,7 +102,7 @@ fu! <sid>Mkdir(dir) "{{{2
     endif
 endfu
 
-fu! <sid>LocalSettings(values, readflag) "{{{2
+fu! <sid>LocalSettings(values, readflag, file) "{{{2
     if empty(a:values)
         " Set shellrediraction temporarily
         " This is used to get su working right!
@@ -122,13 +122,26 @@ fu! <sid>LocalSettings(values, readflag) "{{{2
             set shell=sh
         endif
         call <sid>Init()
-        return [o_srr, o_ar, o_tti, o_tte, o_shell]
+        if empty(a:file)
+            let file = expand("%")
+        else
+            let file = expand(a:file)
+            if empty(file)
+                let file = a:file " expand() might fail (issue #17)
+            endif
+            if file =~ '^sudo:'
+                let s:use_sudo_protocol_handler = 1
+                let file = substitute(file, '^sudo:', '', '')
+            endif
+            let file = fnamemodify(file, ':p')
+        endif
+        return [o_srr, o_ar, o_tti, o_tte, o_shell, file]
     else
         " Make sure, persistent undo information is written
         " but only for valid files and not empty ones
-        let file=substitute(expand("%"), '^sudo:', '', '')
+        let file=a:values[-1]
         try
-            if exists("s:skip_wundo") && s:skip_wundo = 1
+            if exists("s:skip_wundo") && s:skip_wundo
                 return
             endif
             if has("persistent_undo")
@@ -145,15 +158,14 @@ fu! <sid>LocalSettings(values, readflag) "{{{2
                     " Be careful, :e! within a BufWriteCmd can crash Vim!
                     exe "e!" file
                 endif
-                if empty(glob(undofile)) &&
+                call <sid>Exec("wundo! ". fnameescape(undofile(file)))
+                if empty(glob(fnameescape(undofile))) &&
                     \ &undodir =~ '^\.\($\|,\)'
                     " Can't create undofile
                     call add(s:msg, "Can't create undofile in current " .
                     \ "directory, skipping writing undofiles!")
                     throw "sudo:undofileError"
-                endif
-                call <sid>Exec("wundo! ". fnameescape(undofile(file)))
-                if empty(glob(fnameescape(undofile(file))))
+                elseif empty(glob(fnameescape(undofile(file))))
                     " Writing undofile not possible 
                     call add(s:msg,  "Error occured, when writing undofile")
                     return
@@ -412,28 +424,16 @@ endfu
 
 fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     try
-        let _settings=<sid>LocalSettings([], 1)
+        let _settings=<sid>LocalSettings([], 1, a:file)
     catch /sudo:noTool/
-        call <sid>LocalSettings(_settings, a:readflag)
+        call <sid>LocalSettings(_settings, a:readflag, '')
         return
     endtry
     let s:use_sudo_protocol_handler = 0
-    if empty(a:file)
-        let file = expand("%")
-    else
-        let file = expand(a:file)
-        if empty(file)
-            let file = a:file " expand() might fail (issue #17)
-        endif
-        if file =~ '^sudo:'
-            let s:use_sudo_protocol_handler = 1
-            let file = substitute(file, '^sudo:', '', '')
-        endif
-        let file = fnamemodify(file, ':p')
-    endif
+    let file = _settings[-1]
     if empty(file)
         call <sid>echoWarn("Cannot write file. Please enter filename for writing!")
-        call <sid>LocalSettings(_settings, 1)
+        call <sid>LocalSettings(_settings, 1, '')
         return
     endif
     try
@@ -464,7 +464,7 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     finally
         " Delete temporary file
         call delete(s:writable_file)
-        call <sid>LocalSettings(_settings, a:readflag)
+        call <sid>LocalSettings(_settings, a:readflag, '')
         call <sid>Mes(s:msg)
     endtry
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
