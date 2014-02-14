@@ -300,7 +300,10 @@ fu! <sid>SudoWrite(file) range "{{{2
         if empty(glob(a:file))
             let s:new_file = 1
         endif
+        let sshm = &shortmess
+        set shortmess+=A  " don't give the "ATTENTION" message when an existing swap file is found.
         exe "f" fnameescape(a:file)
+        let &shortmess = sshm
         call <sid>Exec(cmd)
     endif
     if v:shell_error
