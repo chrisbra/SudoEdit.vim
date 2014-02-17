@@ -75,7 +75,7 @@ filename completion)
         :[range]SudoWrite[!] [file]
 
 SudoWrite will write the given file using any of the configured methods for
-superuser authtication. It basically does something like this: >
+superuser authentication. It basically does something like this: >
 
     :w !sudo tee >/dev/null file
 
