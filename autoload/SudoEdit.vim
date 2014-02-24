@@ -170,7 +170,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                     call add(s:msg,  "Error occured, when writing undofile")
                     return
                 endif
-                if <sid>is("unix") && !empty(undofile)
+                if <sid>Is("unix") && !empty(undofile)
                     let ufile = string(shellescape(undofile, 1))
                     let perm = system("stat -c '%u:%g' " .
                         \ shellescape(file, 1))[:-2]
