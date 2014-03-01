@@ -449,10 +449,6 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
                 throw "sudo:BufferNotModified"
             endif
         else
-            if !&mod && empty(a:force) && empty(a:file)
-                call add(s:msg, "Buffer not modified, not writing!")
-                throw "sudo:BufferNotModified"
-            endif
             exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite(file)'
             call add(s:msg, <sid>Stats(file))
         endif
