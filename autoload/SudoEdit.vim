@@ -170,7 +170,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                     call add(s:msg,  "Error occured, when writing undofile")
                     return
                 endif
-                if <sid>Is("unix") && !empty(undofile)
+                if <sid>Is("unix") && !empty(undofile) && s:error_exists == 0
                     let ufile = string(shellescape(undofile, 1))
                     let perm = system("stat -c '%u:%g' " .
                         \ shellescape(file, 1))[:-2]
@@ -414,7 +414,7 @@ fu! <sid>Exec(cmd) "{{{2
     endif
     if filereadable(s:error_file) && getfsize(s:error_file) > 0
         let error=readfile(s:error_file)
-        call add(s:msg, join(error, "\n"))
+        let s:msg += error
         call delete(s:error_file)
     endif
 endfu
@@ -453,10 +453,17 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
             call add(s:msg, <sid>Stats(file))
         endif
     catch /sudo:writeError/
-        call <sid>Exception("There was an error writing the file!")
+        " output error message (only the last line)
+        call <sid>Exception("There was an error writing the file! ".
+                    \ substitute(s:msg[-1], "\n(.*)$", "\1", ''))
+        let s:skip_wundo = 1
         return
     catch /sudo:readError/
-        call <sid>Exception("There was an error reading the file ". file. " !")
+        " output error message (only the last line)
+        call <sid>Exception("There was an error reading the file ". file. " !". 
+                    \ substitute(s:msg[-1], "\n(.*)$", "\1", ''))
+        " skip writing the undofile, it will most likely also fail.
+        let s:skip_wundo = 1
         return
     catch /sudo:BufferNotModified/
         let s:skip_wundo = 1
