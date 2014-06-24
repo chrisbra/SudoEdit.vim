@@ -115,6 +115,9 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
         let o_tte = &t_te
         " Turn off screen switching
         set t_ti= t_te=
+        " avoid a problem with noshelltemp #32
+        let o_stmp = &stmp
+        setl stmp
         " Set shell to something sane (zsh, doesn't allow to override files using
         " > redirection, issue #24, hopefully POSIX sh works everywhere)
         let o_shell = &shell
@@ -135,7 +138,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             endif
             let file = fnamemodify(file, ':p')
         endif
-        return [o_srr, o_ar, o_tti, o_tte, o_shell, file]
+        return [o_srr, o_ar, o_tti, o_tte, o_shell, o_stmp, file]
     else
         " Make sure, persistent undo information is written
         " but only for valid files and not empty ones
@@ -198,7 +201,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             " shellredirection
             let &srr  = a:values[0]
             " Screen switchting codes, and shell
-            let [ &t_ti, &t_te, &shell ] = a:values[2:4]
+            let [ &t_ti, &t_te, &shell, &stmp ] = a:values[2:5]
             " Reset autoread option
             let &l:ar = a:values[1]
         endtry
