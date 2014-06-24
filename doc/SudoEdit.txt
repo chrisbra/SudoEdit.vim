@@ -1,7 +1,7 @@
 *SudoEdit.txt*  Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.19 Wed, 14 Aug 2013 22:29:27 +0200
+Version: Vers 0.20 Thu, 27 Mar 2014 23:19:50 +0100
 Copyright: (c) 2009-2013 by Christian Brabandt               *SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -267,7 +267,7 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History                                         *SudoEdit-history*
-	0.20: (unreleased) "{{{1
+	0.20: Mar 27, 2014 "{{{1
 	    - skip writing undo, if the buffer hasn't been written.
 	    - document |g:sudo_tee| variable
 	    - possibly wrong undofile was written (issue

@@ -1,7 +1,7 @@
 *SudoEdit.txt*  Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.19 Wed, 14 Aug 2013 22:29:27 +0200
+Version: Vers 0.20 Thu, 27 Mar 2014 23:19:50 +0100
 Copyright: (c) 2009-2013 by Christian Brabandt               *SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -75,7 +75,7 @@ filename completion)
         :[range]SudoWrite[!] [file]
 
 SudoWrite will write the given file using any of the configured methods for
-superuser authtication. It basically does something like this: >
+superuser authentication. It basically does something like this: >
 
     :w !sudo tee >/dev/null file
 
@@ -138,6 +138,15 @@ to make use of gnome-ssh-askpass for querying the password.
 If you like to disable this, set the variable g:sudo_no_gui, e.g. >
 
     :let g:sudo_no_gui=1
+<
+							      *g:sudo_tee*
+
+By default, the SudoEdit plugin uses the tee command to write your file (at
+least on Unix and Mac). If you don't have the tee command available in your
+path or you want to use a different tool, that is similar but called
+differently, specify this option like this: >
+
+    :let g:sudo_tee='/usr/bin/tee'
 
 ==============================================================================
 3.1 SudoEdit on Windows                                          *SudoEdit-Win*
@@ -258,6 +267,12 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History                                         *SudoEdit-history*
+	0.20: Mar 27, 2014 "{{{1
+	    - skip writing undo, if the buffer hasn't been written.
+	    - document |g:sudo_tee| variable
+	    - possibly wrong undofile was written (issue
+	      https://github.com/chrisbra/SudoEdit.vim/issues/21, reported by
+	      blueyed, thanks!)
         0.19: Aug 14, 2013 "{{{1
             - |SudoWrite| should always write if a filename has been given
               (issue #23, reported by Daniel Hahler, thanks!)
