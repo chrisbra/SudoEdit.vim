@@ -271,6 +271,9 @@ third line of this document.
 	    - temporarily set shelltemp (issue 
 	      https://github.com/chrisbra/SudoEdit.vim/issues/32, reported by
 	      Fernando da Silva, thanks!)
+	    - Do not trigger autocommands when writing temp files
+	    - Make UAC actually work for Windows
+	    - many small improvements for Windows
 	0.20: Mar 27, 2014 "{{{1
 	    - skip writing undo, if the buffer hasn't been written.
 	    - document |g:sudo_tee| variable
