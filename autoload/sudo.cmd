@@ -1,10 +1,6 @@
 @echo off
 cls
 
-setlocal DisableDelayedExpansion
-set "batchPath=%~0"
-setlocal EnableDelayedExpansion
-
 :: File to write to
 set mode=%1
 set myfile=%2
@@ -35,11 +31,11 @@ echo ***************************************
 echo Calling %sudo% for Privilege Escalation
 echo ***************************************
 if '%mode%' == 'write' (
-    %sudo% %params% "cmd.exe /c type %newcontent% >%myfile%"
-    ) else (
-    %sudo% %params% "cmd.exe /c type %myfile% >%newcontent%"
-    )
-goto END
+    %sudo% %params% " %COMSPEC% /c copy /Y %newcontent% %myfile% "
+) else (
+    %sudo% %params% " %COMSPEC% /c copy /Y %myfile% %newcontent% "
+)
+exit /B
 
 :: Use UAC to elevate rights, idea taken from:
 :: http://stackoverflow.com/questions/7044985/how-can-i-auto-elevate-my-batch-file-so-that-it-requests-from-uac-admin-rights
@@ -57,8 +53,6 @@ if '%mode%' == 'write' (
 ) else (
     echo UAC.ShellExecute "%COMSPEC%", "/c copy /Y "%myfile%" "%newcontent%"", "", "runas", 1 >> %vbs%
 )
-:: Run VBS script
+:: Run VBS script and delete it afterwards
 %vbs%
-
-:END
 if exist %vbs% (del %vbs%)
