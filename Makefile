@@ -7,6 +7,8 @@ VERSION=$(shell sed -n '/Version:/{s/^.*\(\S\.\S\+\)$$/\1/;p}' plugin/SudoEdit.v
 
 all: $(PLUGIN).vmb
 
+vimball: $(PLUGIN) $(PLUGIN).vmb
+
 version: $(PLUGIN) $(PLUGIN).vmb
 
 clean:
@@ -15,20 +17,17 @@ clean:
 	-o -name ".VimballRecord" -o -name ".*.un~" -o -name "*.sw*" -o \
 	-name tags -o -name "*.vmb" \) -delete
 
-vimball:
-	$(PLUGIN) $(PLUGIN).vmb
-
 dist-clean: clean
 
 install:
-	vim -u NONE -N -c':so' -c':q!' ${PLUGIN}.vmb
+	vim -N -u NONE -c 'ru! plugin/vimballPlugin.vim' -c':so %' -c':q!' ${PLUGIN}.vmb
 
 release: $(PLUGIN) $(PLUGIN).vmb
 	ln -f $(PLUGIN).vmb $(PLUGIN)-$(VERSION).vmb
 	cp -f $(DOC) README
 
 uninstall:
-	vim -u NONE -N -c':RmVimball ${PLUGIN}.vmb'
+	vim -N -u NONE -c 'ru! plugin/vimballPlugin.vim' -c':RmVimball ${PLUGIN}.vmb'
 
 undo:
 	for i in */*.orig; do mv -f "$$i" "$${i%.*}"; done
@@ -38,8 +37,8 @@ test:
 
 SudoEdit.vmb:
 	rm -f $(PLUGIN).vmb
-	vim -N -c 'ru! vimballPlugin.vim' -c ':let g:vimball_home=getcwd()'  -c ':call append("0", ["autoload/SudoEdit.vim", "doc/SudoEdit.txt", "plugin/SudoEdit.vim", "autoload/sudo.cmd"])' -c '$$d' -c ':%MkVimball ${PLUGIN}' -c':q!'
-	vim -N -c 'ru! vimballPlugin.vim' -c ':so %' -c':q!' ${PLUGIN}.vmb
+	vim -N -u NONE -c 'ru! plugin/vimballPlugin.vim' -c ':let g:vimball_home=getcwd()'  -c ':call append("0", ["autoload/SudoEdit.vim", "doc/SudoEdit.txt", "plugin/SudoEdit.vim", "autoload/sudo.cmd"])' -c '$$d' -c ':%MkVimball ${PLUGIN}' -c':q!'
+	vim -N -u NONE -c 'ru! vimballPlugin.vim' -c ':so %' -c':q!' ${PLUGIN}.vmb
 
 SudoEdit:
 	perl -i.orig -pne 'if (/Version:/) {s/\.(\d*)/sprintf(".%d", 1+$$1)/e}' ${SCRIPT}
