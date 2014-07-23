@@ -2,7 +2,7 @@
 UseVimball
 finish
 autoload/SudoEdit.vim	[[[1
-490
+499
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
 " Version:  0.20
@@ -120,6 +120,9 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
         let o_tte = &t_te
         " Turn off screen switching
         set t_ti= t_te=
+        " avoid a problem with noshelltemp #32
+        let o_stmp = &stmp
+        setl stmp
         " Set shell to something sane (zsh, doesn't allow to override files using
         " > redirection, issue #24, hopefully POSIX sh works everywhere)
         let o_shell = &shell
@@ -140,7 +143,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             endif
             let file = fnamemodify(file, ':p')
         endif
-        return [o_srr, o_ar, o_tti, o_tte, o_shell, file]
+        return [o_srr, o_ar, o_tti, o_tte, o_shell, o_stmp, file]
     else
         " Make sure, persistent undo information is written
         " but only for valid files and not empty ones
@@ -203,7 +206,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             " shellredirection
             let &srr  = a:values[0]
             " Screen switchting codes, and shell
-            let [ &t_ti, &t_te, &shell ] = a:values[2:4]
+            let [ &t_ti, &t_te, &shell, &stmp ] = a:values[2:5]
             " Reset autoread option
             let &l:ar = a:values[1]
         endtry
@@ -239,7 +242,7 @@ fu! <sid>SudoRead(file) "{{{2
     sil %d _
     if <sid>Is("win")
         let file=shellescape(fnamemodify(a:file, ':p:8'))
-        let cmd= '!'. s:dir.'\sudo.cmd dummy read '. file. 
+        let cmd= '!'. s:dir.'\sudo.cmd read '. file. 
             \ ' '. s:writable_file.  ' '.
             \ join(s:AuthTool, ' ')
     else
@@ -277,13 +280,13 @@ endfu
 fu! <sid>SudoWrite(file) range "{{{2
     if  s:AuthTool[0] == 'su'
     " Workaround since su cannot be run with :w !
-        exe a:firstline . ',' . a:lastline . 'w! ' . s:writable_file
+        exe "noa" a:firstline . ',' . a:lastline . 'w! ' . s:writable_file
         let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . s:writable_file . ' ' .
-            \ shellescape(a:file,1) . '" --'
+            \ shellescape(a:file,1) . '" -- 2>' . shellescape(s:error_file)
     else
         if <sid>Is("win")
-            exe a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
-            let cmd= '!'. s:dir.'\sudo.cmd dummy write '. shellescape(fnamemodify(a:file, ':p:8')).
+            exe 'noa ' a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
+            let cmd= '!'. s:dir.'\sudo.cmd write '. shellescape(fnamemodify(a:file, ':p:8')).
                 \ ' '. s:writable_file. ' '. join(s:AuthTool, ' ')
         else
             let cmd=printf('%s >/dev/null 2>%s %s', <sid>Path('tee'),
@@ -307,7 +310,7 @@ fu! <sid>SudoWrite(file) range "{{{2
         endif
         let sshm = &shortmess
         set shortmess+=A  " don't give the "ATTENTION" message when an existing swap file is found.
-        exe "f" fnameescape(a:file)
+        exe "sil f" fnameescape(a:file)
         let &shortmess = sshm
         call <sid>Exec(cmd)
     endif
@@ -403,7 +406,9 @@ endfu
 fu! <sid>Exec(cmd) "{{{2
     let cmd = a:cmd
     if exists("g:sudoDebug") && g:sudoDebug
-        let cmd = substitute(a:cmd, '2>'.shellescape(s:error_file), '', 'g')
+        " On Windows, s:error_file could be something like
+        " c:\Users\cbraba~1\... and one needs to escape the '~'
+        let cmd = substitute(a:cmd, '2>'.escape(shellescape(s:error_file), '~'), '', 'g')
         let cmd = 'verb '. cmd
         call <sid>echoWarn(cmd)
         exe cmd
@@ -455,19 +460,23 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
             endif
         else
             exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite(file)'
-            exe "f" fnameescape(a:file)
+            exe "sil f" fnameescape(a:file)
             call add(s:msg, <sid>Stats(file))
         endif
     catch /sudo:writeError/
         " output error message (only the last line)
-        call <sid>Exception("There was an error writing the file! ".
+        if !empty(s:msg)
+            call <sid>Exception("There was an error writing the file! ".
                     \ substitute(s:msg[-1], "\n(.*)$", "\1", ''))
+        endif
         let s:skip_wundo = 1
         return
     catch /sudo:readError/
-        " output error message (only the last line)
-        call <sid>Exception("There was an error reading the file ". file. " !". 
-                    \ substitute(s:msg[-1], "\n(.*)$", "\1", ''))
+        if !empty(s:msg)
+            " output error message (only the last line)
+            call <sid>Exception("There was an error reading the file ". file. " !". 
+                        \ substitute(s:msg[-1], "\n(.*)$", "\1", ''))
+        endif
         " skip writing the undofile, it will most likely also fail.
         let s:skip_wundo = 1
         return
@@ -494,7 +503,7 @@ endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 ts=4 sts=4 sw=4 et:  }}}
 doc/SudoEdit.txt	[[[1
-378
+385
 *SudoEdit.txt*  Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
@@ -764,6 +773,13 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History                                         *SudoEdit-history*
+	0.21: (unreleased) "{{{1
+	    - temporarily set shelltemp (issue 
+	      https://github.com/chrisbra/SudoEdit.vim/issues/32, reported by
+	      Fernando da Silva, thanks!)
+	    - Do not trigger autocommands when writing temp files
+	    - Make UAC actually work for Windows
+	    - many small improvements for Windows
 	0.20: Mar 27, 2014 "{{{1
 	    - skip writing undo, if the buffer hasn't been written.
 	    - document |g:sudo_tee| variable
@@ -960,40 +976,33 @@ unlet s:keepcpo
 " Modeline {{{1
 " vim: fdm=marker sw=2 sts=2 ts=8 fdl=0
 autoload/sudo.cmd	[[[1
-84
+58
 @echo off
 cls
 
-setlocal DisableDelayedExpansion
-set "batchPath=%~0"
-setlocal EnableDelayedExpansion
-
 :: File to write to
-set dummy=%1
-set mode=%2
-set myfile=%3
-set newcontent=%4
-set sudo=%5
-shift
+set mode=%1
+set myfile=%2
+set newcontent=%3
+set sudo=%4
 shift
 shift
 shift
 shift
 
-if '%sudo%' == 'uac' goto checkPrivileges
-if '%dummy%' == 'ELEV' goto gotPrivileges
+if '%sudo%' == 'uac' goto CHECKPRIVILEGES
 
 :: Use runas or something alike to elevate priviliges, but
 :: first parse parameter for runas
 :: Windows cmd.exe is very clumsy to use ;(
 set params=%1
-:loop
+:LOOP
 shift
-if [%1]==[] goto afterloop
+if [%1]==[] goto AFTERLOOP
 set params=%params% %1
-goto loop
+goto LOOP
 
-:afterloop
+:AFTERLOOP
 
 :: Use runas or so to elevate rights
 echo.
@@ -1001,47 +1010,28 @@ echo ***************************************
 echo Calling %sudo% for Privilege Escalation
 echo ***************************************
 if '%mode%' == 'write' (
-    %sudo% %params% "cmd.exe /c type %newcontent% >%myfile%"
-    ) else (
-    %sudo% %params% "cmd.exe /c type %myfile% >%newcontent%"
-    )
-goto end
+    %sudo% %params% " %COMSPEC% /c copy /Y %newcontent% %myfile% "
+) else (
+    %sudo% %params% " %COMSPEC% /c copy /Y %myfile% %newcontent% "
+)
+exit /B
 
 :: Use UAC to elevate rights, idea taken from:
 :: http://stackoverflow.com/questions/7044985/how-can-i-auto-elevate-my-batch-file-so-that-it-requests-from-uac-admin-rights
-:checkPrivileges
-::NET FILE 1>NUL 2>NUL
+:CHECKPRIVILEGES
 set vbs="%temp%\GetPrivileges.vbs"
 
-:: Check if we already have system priviliges
->NUL 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
-if '%errorlevel%' EQU '0' (goto gotPrivileges) else (goto getPrivileges)
-
-:getPrivileges
 echo.
 echo **************************************
 echo Invoking UAC for Privilege Escalation 
 echo **************************************
 
 echo Set UAC = CreateObject^("Shell.Application"^) > %vbs%
-echo UAC.ShellExecute "!batchPath!", "ELEV !mode! "!myfile!" "!newcontent!""   , "", "runas", 1 >> %vbs%
-:: Run VBS script
-%vbs%
-exit /B 
-
-:gotPrivileges
-::setlocal & pushd .
-:: Doesn't work?
-if exist %vbs% (del %vbs%)
-pushd "%CD%"
-cd /d "%~dp0"
-
 if '%mode%' == 'write' (
-    cmd.exe /c type %newcontent% > %myfile%
+    echo UAC.ShellExecute "%COMSPEC%", "/c copy /Y "%newcontent%" "%myfile%"", "", "runas", 1 >> %vbs%
 ) else (
-    cmd.exe /c type %myfile% > %newcontent%
+    echo UAC.ShellExecute "%COMSPEC%", "/c copy /Y "%myfile%" "%newcontent%"", "", "runas", 1 >> %vbs%
 )
-
-if '%errorlevel%' NEQ 0 echo "An error occured"
-
-:end
+:: Run VBS script and delete it afterwards
+%vbs%
+if exist %vbs% (del %vbs%)
