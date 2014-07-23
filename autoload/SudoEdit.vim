@@ -460,8 +460,10 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
         endif
     catch /sudo:writeError/
         " output error message (only the last line)
-        call <sid>Exception("There was an error writing the file! ".
+        if !empty(s:msg)
+            call <sid>Exception("There was an error writing the file! ".
                     \ substitute(s:msg[-1], "\n(.*)$", "\1", ''))
+        endif
         let s:skip_wundo = 1
         return
     catch /sudo:readError/
