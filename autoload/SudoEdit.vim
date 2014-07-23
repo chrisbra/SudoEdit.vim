@@ -401,7 +401,9 @@ endfu
 fu! <sid>Exec(cmd) "{{{2
     let cmd = a:cmd
     if exists("g:sudoDebug") && g:sudoDebug
-        let cmd = substitute(a:cmd, '2>'.shellescape(s:error_file), '', 'g')
+        " On Windows, s:error_file could be something like
+        " c:\Users\cbraba~1\... and one needs to escape the '~'
+        let cmd = substitute(a:cmd, '2>'.escape(shellescape(s:error_file), '~'), '', 'g')
         let cmd = 'verb '. cmd
         call <sid>echoWarn(cmd)
         exe cmd
