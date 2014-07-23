@@ -277,7 +277,7 @@ fu! <sid>SudoWrite(file) range "{{{2
     " Workaround since su cannot be run with :w !
         exe "noa" a:firstline . ',' . a:lastline . 'w! ' . s:writable_file
         let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . s:writable_file . ' ' .
-            \ shellescape(a:file,1) . '" --'
+            \ shellescape(a:file,1) . '" -- 2>' . shellescape(s:error_file)
     else
         if <sid>Is("win")
             exe 'noa ' a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
