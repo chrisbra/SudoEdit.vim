@@ -467,9 +467,11 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
         let s:skip_wundo = 1
         return
     catch /sudo:readError/
-        " output error message (only the last line)
-        call <sid>Exception("There was an error reading the file ". file. " !". 
-                    \ substitute(s:msg[-1], "\n(.*)$", "\1", ''))
+        if !empty(s:msg)
+            " output error message (only the last line)
+            call <sid>Exception("There was an error reading the file ". file. " !". 
+                        \ substitute(s:msg[-1], "\n(.*)$", "\1", ''))
+        endif
         " skip writing the undofile, it will most likely also fail.
         let s:skip_wundo = 1
         return
