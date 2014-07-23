@@ -305,7 +305,7 @@ fu! <sid>SudoWrite(file) range "{{{2
         endif
         let sshm = &shortmess
         set shortmess+=A  " don't give the "ATTENTION" message when an existing swap file is found.
-        exe "f" fnameescape(a:file)
+        exe "sil f" fnameescape(a:file)
         let &shortmess = sshm
         call <sid>Exec(cmd)
     endif
@@ -455,7 +455,7 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
             endif
         else
             exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite(file)'
-            exe "f" fnameescape(a:file)
+            exe "sil f" fnameescape(a:file)
             call add(s:msg, <sid>Stats(file))
         endif
     catch /sudo:writeError/
