@@ -237,7 +237,7 @@ fu! <sid>SudoRead(file) "{{{2
     sil %d _
     if <sid>Is("win")
         let file=shellescape(fnamemodify(a:file, ':p:8'))
-        let cmd= '!'. s:dir.'\sudo.cmd dummy read '. file. 
+        let cmd= '!'. s:dir.'\sudo.cmd read '. file. 
             \ ' '. s:writable_file.  ' '.
             \ join(s:AuthTool, ' ')
     else
@@ -281,7 +281,7 @@ fu! <sid>SudoWrite(file) range "{{{2
     else
         if <sid>Is("win")
             exe a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
-            let cmd= '!'. s:dir.'\sudo.cmd dummy write '. shellescape(fnamemodify(a:file, ':p:8')).
+            let cmd= '!'. s:dir.'\sudo.cmd write '. shellescape(fnamemodify(a:file, ':p:8')).
                 \ ' '. s:writable_file. ' '. join(s:AuthTool, ' ')
         else
             let cmd=printf('%s >/dev/null 2>%s %s', <sid>Path('tee'),

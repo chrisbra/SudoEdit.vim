@@ -6,31 +6,28 @@ set "batchPath=%~0"
 setlocal EnableDelayedExpansion
 
 :: File to write to
-set dummy=%1
-set mode=%2
-set myfile=%3
-set newcontent=%4
-set sudo=%5
-shift
+set mode=%1
+set myfile=%2
+set newcontent=%3
+set sudo=%4
 shift
 shift
 shift
 shift
 
-if '%sudo%' == 'uac' goto checkPrivileges
-if '%dummy%' == 'ELEV' goto gotPrivileges
+if '%sudo%' == 'uac' goto CHECKPRIVILEGES
 
 :: Use runas or something alike to elevate priviliges, but
 :: first parse parameter for runas
 :: Windows cmd.exe is very clumsy to use ;(
 set params=%1
-:loop
+:LOOP
 shift
-if [%1]==[] goto afterloop
+if [%1]==[] goto AFTERLOOP
 set params=%params% %1
-goto loop
+goto LOOP
 
-:afterloop
+:AFTERLOOP
 
 :: Use runas or so to elevate rights
 echo.
@@ -42,43 +39,26 @@ if '%mode%' == 'write' (
     ) else (
     %sudo% %params% "cmd.exe /c type %myfile% >%newcontent%"
     )
-goto end
+goto END
 
 :: Use UAC to elevate rights, idea taken from:
 :: http://stackoverflow.com/questions/7044985/how-can-i-auto-elevate-my-batch-file-so-that-it-requests-from-uac-admin-rights
-:checkPrivileges
-::NET FILE 1>NUL 2>NUL
+:CHECKPRIVILEGES
 set vbs="%temp%\GetPrivileges.vbs"
 
-:: Check if we already have system priviliges
->NUL 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
-if '%errorlevel%' EQU '0' (goto gotPrivileges) else (goto getPrivileges)
-
-:getPrivileges
 echo.
 echo **************************************
 echo Invoking UAC for Privilege Escalation 
 echo **************************************
 
 echo Set UAC = CreateObject^("Shell.Application"^) > %vbs%
-echo UAC.ShellExecute "!batchPath!", "ELEV !mode! "!myfile!" "!newcontent!""   , "", "runas", 1 >> %vbs%
+if '%mode%' == 'write' (
+    echo UAC.ShellExecute "%COMSPEC%", "/c copy /Y "%newcontent%" "%myfile%"", "", "runas", 1 >> %vbs%
+) else (
+    echo UAC.ShellExecute "%COMSPEC%", "/c copy /Y "%myfile%" "%newcontent%"", "", "runas", 1 >> %vbs%
+)
 :: Run VBS script
 %vbs%
-exit /B 
 
-:gotPrivileges
-::setlocal & pushd .
-:: Doesn't work?
+:END
 if exist %vbs% (del %vbs%)
-pushd "%CD%"
-cd /d "%~dp0"
-
-if '%mode%' == 'write' (
-    cmd.exe /c type %newcontent% > %myfile%
-) else (
-    cmd.exe /c type %myfile% > %newcontent%
-)
-
-if '%errorlevel%' NEQ 0 echo "An error occured"
-
-:end
