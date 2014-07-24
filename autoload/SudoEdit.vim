@@ -68,7 +68,9 @@ fu! <sid>Init() "{{{2
                 let s:writable_file = shellescape(fnamemodify(s:writable_file, ':p:8'))
             endif
         else
-            let s:writable_file = tempname()
+            if !exists("s:writable_file")
+                let s:writable_file = tempname()
+            endif
         endif
 
         call <sid>SudoAskPasswd()
@@ -273,6 +275,10 @@ fu! <sid>SudoRead(file) "{{{2
 endfu
 
 fu! <sid>SudoWrite(file) range "{{{2
+    if bufloaded(s:writable_file)
+        " prevent E139 error
+        exe "bw!" s:writable_file
+    endif
     if  s:AuthTool[0] == 'su'
     " Workaround since su cannot be run with :w !
         exe "sil noa" a:firstline . ',' . a:lastline . 'w! ' . s:writable_file
