@@ -5,7 +5,7 @@ VERSION=$(shell sed -n '/Version:/{s/^.*\(\S\.\S\+\)$$/\1/;p}' plugin/SudoEdit.v
 
 .PHONY: $(PLUGIN).vmb clean
 
-all: $(PLUGIN).vmb
+all: $(PLUGIN).vmb install
 
 vimball: $(PLUGIN) $(PLUGIN).vmb
 
