@@ -426,7 +426,7 @@ fu! <sid>Exec(cmd) "{{{2
         call delete(s:error_file)
     endif
 endfu
-fu! <sid>SetBufName(a:file) "{{{2
+fu! <sid>SetBufName(file) "{{{2
     if bufname('') !=# fnameescape(a:file)
         " don't give the "ATTENTION" message when an existing swap file is
         " found.
