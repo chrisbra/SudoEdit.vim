@@ -2,7 +2,7 @@
 UseVimball
 finish
 autoload/SudoEdit.vim	[[[1
-505
+512
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
 " Version:  0.20
@@ -286,12 +286,12 @@ fu! <sid>SudoWrite(file) range "{{{2
     endif
     if  s:AuthTool[0] == 'su'
     " Workaround since su cannot be run with :w !
-        exe "sil noa" a:firstline . ',' . a:lastline . 'w! ' . s:writable_file
+        exe "sil keepalt noa ". a:firstline . ',' . a:lastline . 'w! ' . s:writable_file
         let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . s:writable_file . ' ' .
             \ shellescape(a:file,1) . '" -- 2>' . shellescape(s:error_file)
     else
         if <sid>Is("win")
-            exe 'noa sil' a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
+            exe 'sil keepalt noa '. a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
             let cmd= '!'. s:dir.'\sudo.cmd write '. shellescape(fnamemodify(a:file, ':p:8')).
                 \ ' '. s:writable_file. ' '. join(s:AuthTool, ' ')
         else
@@ -314,10 +314,7 @@ fu! <sid>SudoWrite(file) range "{{{2
         if empty(glob(a:file))
             let s:new_file = 1
         endif
-        let sshm = &shortmess
-        set shortmess+=A  " don't give the "ATTENTION" message when an existing swap file is found.
-        exe "sil f" fnameescape(a:file)
-        let &shortmess = sshm
+        call <sid>SetBufName(a:file)
         call <sid>Exec(cmd)
     endif
     if v:shell_error
@@ -434,6 +431,16 @@ fu! <sid>Exec(cmd) "{{{2
         call delete(s:error_file)
     endif
 endfu
+fu! <sid>SetBufName(file) "{{{2
+    if bufname('') !=# fnameescape(a:file)
+        " don't give the "ATTENTION" message when an existing swap file is
+        " found.
+        let sshm = &shortmess
+        set shortmess+=A
+        exe "sil f" fnameescape(a:file)
+        let &shortmess = sshm
+    endif
+endfu
 fu! SudoEdit#Rmdir(dir) "{{{2
     if <sid>Is("win")
         sil! call system("rd /s /q ". a:dir)
@@ -466,7 +473,7 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
             endif
         else
             exe a:firstline . ',' . a:lastline . 'call <sid>SudoWrite(file)'
-            exe "sil f" fnameescape(a:file)
+            call <sid>SetBufName(a:file)
             call add(s:msg, <sid>Stats(file))
         endif
     catch /sudo:writeError/
