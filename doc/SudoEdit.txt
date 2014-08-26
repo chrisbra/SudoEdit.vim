@@ -274,6 +274,9 @@ third line of this document.
 	    - Do not trigger autocommands when writing temp files
 	    - Make UAC actually work for Windows
 	    - many small improvements for Windows
+	    - do not call expand() for $SHELL variables (issue 
+	      https://github.com/chrisbra/SudoEdit.vim/pull/34, fixed by
+	      Daniel Hahler, thanks!)
 	0.20: Mar 27, 2014 "{{{1
 	    - skip writing undo, if the buffer hasn't been written.
 	    - document |g:sudo_tee| variable
