@@ -62,8 +62,7 @@ fu! <sid>Init() "{{{2
             if !exists("s:writable_file")
                 " Write into public directory so everybody can access it
                 " easily
-                let s:writable_file = (empty(expand("$PUBLIC")) ? 
-                            \ expand("$TEMP") : expand("$PUBLIC") ).
+                let s:writable_file = (empty($PUBLIC) ? $TEMP : $PUBLIC ).
                             \ '\vim_temp.txt'
                 let s:writable_file = shellescape(fnamemodify(s:writable_file, ':p:8'))
             endif
@@ -382,9 +381,8 @@ fu! <sid>SudoAskPasswd() "{{{2
         let askpwd = insert(askpwd, g:sudo_askpass, 0)
     endif
     let sudo_arg = '-A'
-    let sudo_askpass = expand("$SUDO_ASKPASS")
-    if sudo_askpass != "$SUDO_ASKPASS"
-        let list = [ sudo_askpass ] + askpwd
+    if len($SUDO_ASKPASS)
+        let list = [ $SUDO_ASKPASS ] + askpwd
     else
         let list = askpwd
     endif
