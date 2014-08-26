@@ -3,7 +3,7 @@
 " Version:  0.20
 " Authors:  Christian Brabandt <cb@256bit.org>
 " Last Change: Thu, 27 Mar 2014 23:19:50 +0100
-" Script:  http://www.vim.org/scripts/script.php?script_id=2709 
+" Script:  http://www.vim.org/scripts/script.php?script_id=2709
 " License: VIM License
 " GetLatestVimScripts: 2709 20 :AutoInstall: SudoEdit.vim
 
@@ -20,7 +20,7 @@ fu! <sid>Init() "{{{2
 
 "    each time check, whether the authentication
 "    method changed (e.g. the User set a variable)
-"    if !exists("s:AuthTool") 
+"    if !exists("s:AuthTool")
         let s:sudoAuth=" sudo su "
         if <sid>Is("mac")
             let s:sudoAuth = "security ". s:sudoAuth
@@ -28,14 +28,14 @@ fu! <sid>Init() "{{{2
             let s:sudoAuth = "runas elevate ". s:sudoAuth
         endif
         if exists("g:sudoAuth")
-            let s:sudoAuth = g:sudoAuth .' '. s:sudoAuth 
+            let s:sudoAuth = g:sudoAuth .' '. s:sudoAuth
         endif
 
         " Specify the parameter to use for the auth tool e.g. su uses "-c", but
-        " for su, it will be autodetected, sudo does not need one, for ssh use 
+        " for su, it will be autodetected, sudo does not need one, for ssh use
         " "root@localhost"
         "
-        " You can also use this parameter if you do not want to become root 
+        " You can also use this parameter if you do not want to become root
         " but any other user
         "
         " You can specify this parameter in your .vimrc using the
@@ -170,7 +170,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                     \ "directory, skipping writing undofiles!")
                     throw "sudo:undofileError"
                 elseif empty(glob(fnameescape(undofile(file))))
-                    " Writing undofile not possible 
+                    " Writing undofile not possible
                     call add(s:msg,  "Error occured, when writing undofile")
                     return
                 endif
@@ -238,7 +238,7 @@ fu! <sid>SudoRead(file) "{{{2
     sil %d _
     if <sid>Is("win")
         let file=shellescape(fnamemodify(a:file, ':p:8'))
-        let cmd= '!'. s:dir.'\sudo.cmd read '. file. 
+        let cmd= '!'. s:dir.'\sudo.cmd read '. file.
             \ ' '. s:writable_file.  ' '.
             \ join(s:AuthTool, ' ')
     else
@@ -255,7 +255,7 @@ fu! <sid>SudoRead(file) "{{{2
     endif
     if <sid>Is("win")
         if !filereadable(s:writable_file[1:-2])
-            call add(s:msg, "Temporary file ". s:writable_file. 
+            call add(s:msg, "Temporary file ". s:writable_file.
                         \ " does not exist. Probably access was denied!")
             throw "sudo:readError"
         else
@@ -480,7 +480,7 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     catch /sudo:readError/
         if !empty(s:msg)
             " output error message (only the last line)
-            call <sid>Exception("There was an error reading the file ". file. " !". 
+            call <sid>Exception("There was an error reading the file ". file. " !".
                         \ substitute(s:msg[-1], "\n(.*)$", "\1", ''))
         endif
         " skip writing the undofile, it will most likely also fail.
