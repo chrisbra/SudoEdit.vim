@@ -63,7 +63,7 @@ fu! <sid>Init() "{{{2
                 " Write into public directory so everybody can access it
                 " easily
                 let s:writable_file = (empty($PUBLIC) ? $TEMP : $PUBLIC ).
-                            \ '\vim_temp.txt'
+                            \ '\vim_temp_'.getpid().'.txt'
                 let s:writable_file = shellescape(fnamemodify(s:writable_file, ':p:8'))
             endif
         else
@@ -99,6 +99,8 @@ fu! <sid>Mkdir(dir) "{{{2
             au!
             " Clean up when quitting Vim
             exe "au VimLeave * :call SudoEdit#Rmdir(".dir. ")"
+            " Remove writeable file
+            au VimLeave * :call SudoEdit#RmFile(s:writable_file)
         augroup END
     endif
 endfu
@@ -441,7 +443,9 @@ fu! SudoEdit#Rmdir(dir) "{{{2
         sil! call system("rm -rf -- ". a:dir)
     endif
 endfu
-
+fu! SudoEdit#RmFile(file) "{{{2
+    call delete(fnameescape(a:file))
+endfu
 fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     try
         let _settings=<sid>LocalSettings([], 1, a:file)
