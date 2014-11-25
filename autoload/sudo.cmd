@@ -48,10 +48,10 @@ echo Invoking UAC for Privilege Escalation
 echo **************************************
 
 echo Set UAC = CreateObject^("Shell.Application"^) > %vbs%
-if '%mode%' == 'write' (
-    echo UAC.ShellExecute "%COMSPEC%", "/c copy /Y "%newcontent%" "%myfile%"", "", "runas", 1 >> %vbs%
-) else (
-    echo UAC.ShellExecute "%COMSPEC%", "/c copy /Y "%myfile%" "%newcontent%"", "", "runas", 1 >> %vbs%
+if '%mode%' == 'write' 1>> %vbs% (
+    echo UAC.ShellExecute "%COMSPEC%", "/c copy /Y "%newcontent%" "%myfile%"", "", "runas", 1
+) else 1>> %vbs% (
+    echo UAC.ShellExecute "%COMSPEC%", "/c copy /Y "%myfile%" "%newcontent%"", "", "runas", 1
 )
 :: Run VBS script and delete it afterwards
 %vbs%
