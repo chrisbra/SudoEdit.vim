@@ -124,8 +124,13 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
         " Set shell to something sane (zsh, doesn't allow to override files using
         " > redirection, issue #24, hopefully POSIX sh works everywhere)
         let o_shell = &shell
+        let o_ssl   = &ssl
         if !<sid>Is("win")
             set shell=sh
+        else
+            " set noshellslash so that the correct slashes
+            " are used when creating the vbs and cmd file.
+            set nossl
         endif
         call <sid>Init()
         if empty(a:file)
@@ -141,7 +146,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             endif
             let file = fnamemodify(file, ':p')
         endif
-        return [o_srr, o_ar, o_tti, o_tte, o_shell, o_stmp, file]
+        return [o_srr, o_ar, o_tti, o_tte, o_shell, o_stmp, o_ssl, file]
     else
         " Make sure, persistent undo information is written
         " but only for valid files and not empty ones
@@ -202,11 +207,9 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             checktime
             " Reset old settings
             " shellredirection
-            let &srr  = a:values[0]
             " Screen switchting codes, and shell
-            let [ &t_ti, &t_te, &shell, &stmp ] = a:values[2:5]
             " Reset autoread option
-            let &l:ar = a:values[1]
+            let [ &srr, &l:ar, &t_ti, &t_te, &shell, &stmp, &ssl ] = a:values[0:6]
         endtry
     endif
 endfu

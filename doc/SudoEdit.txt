@@ -279,6 +279,7 @@ third line of this document.
 	      Daniel Hahler, thanks!)
 	    - remove writable file always (and make sure it will be different
 	      in case of the Vim running twice).
+	    - Reset 'shellslash' on windows
 	0.20: Mar 27, 2014 "{{{1
 	    - skip writing undo, if the buffer hasn't been written.
 	    - document |g:sudo_tee| variable
