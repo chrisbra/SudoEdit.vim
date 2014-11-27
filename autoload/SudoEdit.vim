@@ -169,14 +169,14 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                     " Be careful, :e! within a BufWriteCmd can crash Vim!
                     exe "e!" file
                 endif
-                call <sid>Exec("wundo! ". fnameescape(undofile(file)))
-                if empty(glob(fnameescape(undofile))) &&
+                call <sid>Exec("wundo! ". fnameescape(undofile))
+                if empty(glob(undofile)) &&
                     \ &undodir =~ '^\.\($\|,\)'
                     " Can't create undofile
                     call add(s:msg, "Can't create undofile in current " .
                     \ "directory, skipping writing undofiles!")
                     throw "sudo:undofileError"
-                elseif empty(glob(fnameescape(undofile(file))))
+                elseif empty(glob(undofile))
                     " Writing undofile not possible
                     call add(s:msg,  "Error occured, when writing undofile")
                     return
