@@ -56,3 +56,4 @@ if '%mode%' == 'write' 1>> %vbs% (
 :: Run VBS script and delete it afterwards
 %vbs%
 if exist %vbs% (del %vbs%)
+exit /b %errorlevel%
