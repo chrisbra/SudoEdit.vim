@@ -20,69 +20,70 @@ fu! <sid>Init() "{{{2
 
 "    each time check, whether the authentication
 "    method changed (e.g. the User set a variable)
-"    if !exists("s:AuthTool")
-        let s:sudoAuth=" sudo su "
-        if <sid>Is("mac")
-            let s:sudoAuth = "security ". s:sudoAuth
-        elseif <sid>Is("win")
-            let s:sudoAuth = "runas elevate ". s:sudoAuth
-        endif
-        if exists("g:sudoAuth")
-            let s:sudoAuth = g:sudoAuth .' '. s:sudoAuth
-        endif
+    let s:sudoAuth=" sudo su "
+    if <sid>Is("mac")
+        let s:sudoAuth = "security ". s:sudoAuth
+    elseif <sid>Is("win")
+        let s:sudoAuth = "runas elevate ". s:sudoAuth
+    endif
+    if exists("g:sudoAuth")
+        let s:sudoAuth = g:sudoAuth .' '. s:sudoAuth
+    endif
 
-        " Specify the parameter to use for the auth tool e.g. su uses "-c", but
-        " for su, it will be autodetected, sudo does not need one, for ssh use
-        " "root@localhost"
-        "
-        " You can also use this parameter if you do not want to become root
-        " but any other user
-        "
-        " You can specify this parameter in your .vimrc using the
-        " global variable g:sudoAuthArg
-        if !exists("g:sudoAuthArg")
-            let s:sudoAuthArg=""
-        else
-            let s:sudoAuthArg=g:sudoAuthArg
-        endif
+    " Specify the parameter to use for the auth tool e.g. su uses "-c", but
+    " for su, it will be autodetected, sudo does not need one, for ssh use
+    " "root@localhost"
+    "
+    " You can also use this parameter if you do not want to become root
+    " but any other user
+    "
+    " You can specify this parameter in your .vimrc using the
+    " global variable g:sudoAuthArg
+    if !exists("g:sudoAuthArg")
+        let s:sudoAuthArg=""
+    else
+        let s:sudoAuthArg=g:sudoAuthArg
+    endif
 
-        let s:AuthTool = <sid>CheckAuthTool(split(s:sudoAuth, '\s'))
-        if empty(s:AuthTool)
-            call <sid>echoWarn("No authentication tool found, aborting!")
-            throw "sudo:noTool"
+    let s:AuthTool = <sid>CheckAuthTool(split(s:sudoAuth, '\s'))
+    if empty(s:AuthTool)
+        call <sid>echoWarn("No authentication tool found, aborting!")
+        throw "sudo:noTool"
+    endif
+    if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
+        let s:sudoAuthArg="-c"
+    elseif s:AuthTool[0] == "security" && empty(s:sudoAuthArg)
+        let s:sudoAuthArg="execute-with-privileges"
+    elseif s:AuthTool[0] == "runas" && empty(s:sudoAuthArg)
+        let s:sudoAuthArg = "/noprofile /user:\"Administrator\""
+    endif
+    if <sid>Is("win")
+        if !exists("s:writable_file")
+            " Write into public directory so everybody can access it
+            " easily
+            let s:writable_file = (empty($PUBLIC) ? $TEMP : $PUBLIC ).
+                        \ '\vim_temp_'.getpid().'.txt'
+            let s:writable_file = shellescape(fnamemodify(s:writable_file, ':p:8'))
         endif
-        if s:AuthTool[0] == "su" && empty(s:sudoAuthArg)
-            let s:sudoAuthArg="-c"
-        elseif s:AuthTool[0] == "security" && empty(s:sudoAuthArg)
-            let s:sudoAuthArg="execute-with-privileges"
-        elseif s:AuthTool[0] == "runas" && empty(s:sudoAuthArg)
-            let s:sudoAuthArg = "/noprofile /user:\"Administrator\""
+    else
+        if !exists("s:writable_file")
+            let s:writable_file = tempname()
         endif
+    endif
+
+    call <sid>SudoAskPasswd()
+    call add(s:AuthTool, s:sudoAuthArg . " ")
+    if !exists("s:error_dir")
+        let s:error_dir = tempname()
+        call <sid>Mkdir(s:error_dir)
+        let s:error_file = s:error_dir. '/error'
         if <sid>Is("win")
-            if !exists("s:writable_file")
-                " Write into public directory so everybody can access it
-                " easily
-                let s:writable_file = (empty($PUBLIC) ? $TEMP : $PUBLIC ).
-                            \ '\vim_temp_'.getpid().'.txt'
-                let s:writable_file = shellescape(fnamemodify(s:writable_file, ':p:8'))
-            endif
-        else
-            if !exists("s:writable_file")
-                let s:writable_file = tempname()
-            endif
+            let s:error_file = s:error_dir. '\error'
+            let s:error_file = fnamemodify(s:error_file, ':p:8')
         endif
-
-        call <sid>SudoAskPasswd()
-        call add(s:AuthTool, s:sudoAuthArg . " ")
-        if !exists("s:error_dir")
-            let s:error_dir = tempname()
-            call <sid>Mkdir(s:error_dir)
-            let s:error_file = s:error_dir. '/error'
-            if <sid>Is("win")
-                let s:error_file = s:error_dir. '\error'
-                let s:error_file = fnamemodify(s:error_file, ':p:8')
-            endif
-        endif
+    endif
+    " Reset skip writing undo files
+    let s:skip_wundo = 0
 "    endif
     " Stack of messages
     let s:msg = []
