@@ -174,7 +174,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                     exe "e!" file
                 endif
                 call <sid>Exec("wundo! ". fnameescape(undofile))
-                if empty(glob(undofile)) &&
+                if !filereadable(undofile) &&
                     \ &undodir =~ '^\.\($\|,\)'
                     " Can't create undofile
                     call add(s:msg, "Can't create undofile in current " .
