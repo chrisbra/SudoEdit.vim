@@ -6,7 +6,8 @@
 Dim FSO, WshShell, UAC, cmd
 
 ' Safety check
-if WScript.Arguments.Count <> 3 then
+' Vim might give more arguments, they will be just ignored
+if WScript.Arguments.Count < 3 then
     WScript.Echo "Syntax: cscript.exe GetPrivileges.vbs [write|read] sourcefile targetfile"
     Wscript.Quit 1
 end if

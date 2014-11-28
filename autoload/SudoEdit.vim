@@ -57,6 +57,7 @@ fu! <sid>Init() "{{{2
     elseif s:AuthTool[0] == "runas" && empty(s:sudoAuthArg)
         let s:sudoAuthArg = "/noprofile /user:\"Administrator\""
     endif
+    let s:IsUAC = (s:AuthTool[0] is? 'uac')
     if <sid>Is("win")
         if !exists("s:writable_file")
             " Write into public directory so everybody can access it
@@ -151,7 +152,9 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
     else
         " Make sure, persistent undo information is written
         " but only for valid files and not empty ones
-        let file=a:values[-1]
+        let values = a:values
+        let file=values[-1]
+        call remove(values, -1)
         try
             if exists("s:skip_wundo") && s:skip_wundo
                 return
@@ -196,7 +199,6 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                             \ " setting permissions of the undofile")
                     endif
                     call <sid>Exec(cmd)
-                    "call system(cmd)
                 endif
                 endif
             endif
@@ -207,10 +209,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             " Make sure W11 warning is triggered and consumed by 'ar' setting
             checktime
             " Reset old settings
-            " shellredirection
-            " Screen switchting codes, and shell
-            " Reset autoread option
-            let [ &srr, &l:ar, &t_ti, &t_te, &shell, &stmp, &ssl ] = a:values[0:6]
+            let [ &srr, &l:ar, &t_ti, &t_te, &shell, &stmp, &ssl ] = values
         endtry
     endif
 endfu
@@ -243,10 +242,11 @@ endfu
 fu! <sid>SudoRead(file) "{{{2
     sil %d _
     if <sid>Is("win")
-        let file=shellescape(fnamemodify(a:file, ':p:8'))
-        let cmd= '!'. s:dir.'\sudo.cmd read '. file.
-            \ ' '. s:writable_file.  ' '.
-            \ join(s:AuthTool, ' ')
+        " Use Windows Shortnames (should makeing quoting easy)
+        let file = shellescape(fnamemodify(a:file, ':p:8'))
+        let cmd  = printf('!%s\%s read %s %s %s', s:dir,
+                \ (s:IsUAC ? 'GetPrivileges.vbs' : 'sudo.cmd'),
+                \ file, s:writable_file, join(s:AuthTool, ' '))
     else
         let cmd='cat ' . shellescape(a:file,1) . ' 2>'. shellescape(s:error_file)
         if  s:AuthTool[0] =~ '^su$'
@@ -285,20 +285,22 @@ fu! <sid>SudoWrite(file) range "{{{2
         exe "bw!" s:writable_file
     endif
     if  s:AuthTool[0] == 'su'
-    " Workaround since su cannot be run with :w !
+        " Workaround since su cannot be run with :w !
         exe "sil keepalt noa ". a:firstline . ',' . a:lastline . 'w! ' . s:writable_file
         let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . s:writable_file . ' ' .
             \ shellescape(a:file,1) . '" -- 2>' . shellescape(s:error_file)
     else
         if <sid>Is("win")
             exe 'sil keepalt noa '. a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
-            let cmd= '!'. s:dir.'\sudo.cmd write '. shellescape(fnamemodify(a:file, ':p:8')).
-                \ ' '. s:writable_file. ' '. join(s:AuthTool, ' ')
+            let file = shellescape(fnamemodify(a:file, ':p:8'))
+            let cmd= printf('!%s\%s write %s %s %s', s:dir,
+                \ (s:IsUAC ? 'GetPrivileges.vbs' : 'sudo.cmd'), file, s:writable_file,
+                \ join(s:AuthTool, ' '))
         else
             let cmd=printf('%s >/dev/null 2>%s %s', <sid>Path('tee'),
                 \ shellescape(s:error_file), shellescape(a:file,1))
             let cmd=a:firstline . ',' . a:lastline . 'w !' .
-            \ join(s:AuthTool, ' ') . cmd
+                \ join(s:AuthTool, ' ') . cmd
         endif
     endif
     if <sid>CheckNetrwFile(a:file) && exists(":NetUserPass") == 2
@@ -509,6 +511,5 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
         filetype detect
     endif
 endfu
-
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 ts=4 sts=4 sw=4 et:  }}}
