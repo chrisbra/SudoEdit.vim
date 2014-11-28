@@ -199,10 +199,13 @@ Alternatively, on recent Windows versions, you can use the builtin UAC system
 and have a batch script automatically elevated, which will do the writing and
 reading of the file. This method is rather experimental and might not work in
 all cases. To make use of UAC set the g:sudoAuth variable to the string "uac":
->
 
     :let g:sudoAuth="uac"
 
+Technically, this works, by calling a VBScript, that will create a UAC dialog
+and on success write the files. This script is is called GetPrivileges.vbs and 
+is distributed with SudoEdit.vim plugin and lives within the autoload folder
+where the SudoEdit plugin resides.
 ==============================================================================
 4. SudoEdit Debugging                                       *SudoEdit-debug*
 
@@ -279,7 +282,11 @@ third line of this document.
 	      Daniel Hahler, thanks!)
 	    - remove writable file always (and make sure it will be different
 	      in case of the Vim running twice).
-	    - Reset 'shellslash' on windows
+	    - Reset 'shellslash' on windows (suggested by Boris Danilov,
+	      thanks!)
+	    - change redirection when calling UAC vbs script (suggested by
+	      Boris Danilov, thanks!)
+	    - distribute the UAC VBScript together with the SudoEdit plugin
 	0.20: Mar 27, 2014 "{{{1
 	    - skip writing undo, if the buffer hasn't been written.
 	    - document |g:sudo_tee| variable
