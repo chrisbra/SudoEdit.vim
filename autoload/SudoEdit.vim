@@ -174,17 +174,6 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                     exe "e!" file
                 endif
                 call <sid>Exec("wundo! ". fnameescape(undofile))
-                if !filereadable(undofile) &&
-                    \ &undodir =~ '^\.\($\|,\)'
-                    " Can't create undofile
-                    call add(s:msg, "Can't create undofile in current " .
-                    \ "directory, skipping writing undofiles!")
-                    throw "sudo:undofileError"
-                elseif empty(glob(undofile))
-                    " Writing undofile not possible
-                    call add(s:msg,  "Error occured, when writing undofile")
-                    return
-                endif
                 if <sid>Is("unix") && !empty(undofile) && s:error_exists == 0
                     let ufile = string(shellescape(undofile, 1))
                     let perm = system("stat -c '%u:%g' " .
@@ -199,6 +188,18 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                             \ " setting permissions of the undofile")
                     endif
                     call <sid>Exec(cmd)
+                endif
+                " Check if undofile is readable
+                if !filereadable(undofile) &&
+                    \ &undodir =~ '^\.\($\|,\)'
+                    " Can't create undofile
+                    call add(s:msg, "Can't create undofile in current " .
+                    \ "directory, skipping writing undofiles!")
+                    throw "sudo:undofileError"
+                elseif !filereadable(undofile)
+                    " Writing undofile not possible
+                    call add(s:msg,  "Error occured, when writing undofile")
+                    return
                 endif
                 endif
             endif
