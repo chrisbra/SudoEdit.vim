@@ -28,10 +28,10 @@ END if
 
 if (WScript.Arguments(0) = "write") then
     ' Write Files (delete source file afterwards, so we can easily check, if the copy worked
-    UAC.ShellExecute cmd, "/c copy /Y " & WScript.Arguments(1) & " " & WScript.Arguments(2) & " && del /Q " & WScript.Arguments(1), "", "runas", 1
+    UAC.ShellExecute cmd, "/c copy /Y " & WScript.Arguments(2) & " " & WScript.Arguments(1) & " && del /Q " & WScript.Arguments(2), "", "runas", 1
 else
     ' Read Files
-    UAC.ShellExecute cmd, "/c copy /Y " & WScript.Arguments(2) & " " & WScript.Arguments(1), "", "runas", 1
+    UAC.ShellExecute cmd, "/c copy /Y " & WScript.Arguments(1) & " " & WScript.Arguments(2), "", "runas", 1
 end if
 
 ' Sleep a moment, so that the FileExists check works correctly
