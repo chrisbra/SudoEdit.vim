@@ -38,7 +38,7 @@ end if
 ' This only works for when writing the file,
 ' assume the read operation worked....
 WScript.Sleep 100
-If (FSO.FileExists(WScript.Arguments(1)) AND WScript.Arguments(0) = "write") Then
+If (FSO.FileExists(WScript.Arguments(2)) AND WScript.Arguments(0) = "write") Then
     WScript.Echo "Copy Failed"
     WScript.Quit 3
 end if
