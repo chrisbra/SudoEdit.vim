@@ -37,7 +37,7 @@ test:
 
 SudoEdit.vmb:
 	rm -f $(PLUGIN).vmb
-	vim -N -u NONE -c 'ru! plugin/vimballPlugin.vim' -c ':let g:vimball_home=getcwd()'  -c ':call append("0", ["autoload/SudoEdit.vim", "doc/SudoEdit.txt", "plugin/SudoEdit.vim", "autoload/sudo.cmd", "autoload/GetPrivileges.vbs"])' -c '$$d' -c ':%MkVimball ${PLUGIN}' -c':q!'
+	vim -N -u NONE -c 'ru! plugin/vimballPlugin.vim' -c ':let g:vimball_home=getcwd()'  -c ':call append("0", ["autoload/SudoEdit.vim", "doc/SudoEdit.txt", "plugin/SudoEdit.vim", "autoload/sudo.cmd", "autoload/SudoEdit.vbs"])' -c '$$d' -c ':%MkVimball ${PLUGIN}' -c':q!'
 	vim -N -u NONE -c 'ru! vimballPlugin.vim' -c ':so %' -c':q!' ${PLUGIN}.vmb
 
 SudoEdit:

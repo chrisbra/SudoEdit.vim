@@ -245,8 +245,8 @@ fu! <sid>SudoRead(file) "{{{2
         " Use Windows Shortnames (should makeing quoting easy)
         let file = shellescape(fnamemodify(a:file, ':p:8'))
         let cmd  = printf('!%s\%s read %s %s %s', s:dir,
-                \ (s:IsUAC ? 'GetPrivileges.vbs' : 'sudo.cmd'),
-                \ file, s:writable_file, join(s:AuthTool, ' '))
+                \ (s:IsUAC ? 'SudoEdit.vbs' : 'sudo.cmd'),
+                \ file, s:writable_file, (s:IsUAC ? '' : join(s:AuthTool, ' ')))
     else
         let cmd='cat ' . shellescape(a:file,1) . ' 2>'. shellescape(s:error_file)
         if  s:AuthTool[0] =~ '^su$'
@@ -294,8 +294,8 @@ fu! <sid>SudoWrite(file) range "{{{2
             exe 'sil keepalt noa '. a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
             let file = shellescape(fnamemodify(a:file, ':p:8'))
             let cmd= printf('!%s\%s write %s %s %s', s:dir,
-                \ (s:IsUAC ? 'GetPrivileges.vbs' : 'sudo.cmd'), file, s:writable_file,
-                \ join(s:AuthTool, ' '))
+                \ (s:IsUAC ? 'SudoEdit.vbs' : 'sudo.cmd'), file, s:writable_file,
+                \ (s:IsUAC ? '' : join(s:AuthTool, ' ')))
         else
             let cmd=printf('%s >/dev/null 2>%s %s', <sid>Path('tee'),
                 \ shellescape(s:error_file), shellescape(a:file,1))
