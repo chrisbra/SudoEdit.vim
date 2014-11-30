@@ -253,7 +253,7 @@ work, set the 'undodir' option to a directory, that is writable.
 5) Great work!
 
 Write me an email (look in the first line for my mail address). And if you are
-really happy, vote for the plugin and consider looking at my Amazon whishlist:
+really happy, vote for the plugin and consider looking at my Amazon wish list:
 http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 6) Plugin Feedback                                        *SudoEdit-feedback*
