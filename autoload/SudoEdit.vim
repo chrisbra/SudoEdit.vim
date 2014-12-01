@@ -327,7 +327,6 @@ fu! <sid>SudoWrite(file) range "{{{2
         if empty(glob(a:file))
             let s:new_file = 1
         endif
-        call <sid>SetBufName(a:file)
         call <sid>Exec(cmd)
     endif
     if v:shell_error
@@ -444,7 +443,7 @@ fu! <sid>Exec(cmd) "{{{2
     endif
 endfu
 fu! <sid>SetBufName(file) "{{{2
-    if bufname('') !=# fnameescape(a:file)
+    if bufname('') !=# fnameescape(a:file) && !empty(fnameescape(a:file))
         " don't give the "ATTENTION" message when an existing swap file is
         " found.
         let sshm = &shortmess
