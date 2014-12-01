@@ -516,7 +516,7 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     endif
     if s:use_sudo_protocol_handler ||
         \ empty(expand("%")) ||
-        \ file != expand("%")
+        \ fnamemodify(file, ':p') != fnamemodify(expand("%"), ':p')
         exe ':sil f ' . file
         filetype detect
     endif
