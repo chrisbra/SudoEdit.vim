@@ -533,6 +533,7 @@ fu! SudoEdit#FileChanged(file) "{{{2
     let file=fnamemodify(expand("<afile>"), ':p')
     if getftime(file) > get(g:buf_changes, bufnr(file), 0) + 2
         " consider everything within the last 2 seconds as caused by this plugin
+        " Avoids W11 warning
         let v:fcs_choice='ask'
     else
         let v:fcs_choice='reload'
