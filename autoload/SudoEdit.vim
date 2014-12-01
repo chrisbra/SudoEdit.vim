@@ -459,7 +459,7 @@ fu! SudoEdit#Rmdir(dir) "{{{2
     endif
 endfu
 fu! SudoEdit#RmFile(file) "{{{2
-    call delete(fnameescape(a:file))
+    call delete(a:file)
 endfu
 fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     try
