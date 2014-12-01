@@ -251,7 +251,8 @@ fu! <sid>SudoRead(file) "{{{2
     if <sid>Is("win")
         " Use Windows Shortnames (should makeing quoting easy)
         let file = shellescape(fnamemodify(a:file, ':p:8'))
-        let cmd  = printf('!%s%s%s read %s %s %s', s:dir, s:slash,
+        let cmd  = printf('!%s%s%s%s read %s %s %s', 
+                \ (s:IsUAC ? 'wscript.exe ':''), s:dir, s:slash,
                 \ (s:IsUAC ? 'SudoEdit.vbs' : 'sudo.cmd'),
                 \ file, s:writable_file, (s:IsUAC ? '' : join(s:AuthTool, ' ')))
     else
@@ -300,7 +301,8 @@ fu! <sid>SudoWrite(file) range "{{{2
         if <sid>Is("win")
             exe 'sil keepalt noa '. a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
             let file = shellescape(fnamemodify(a:file, ':p:8'))
-            let cmd= printf('!%s%s%s write %s %s %s', s:dir, s:slash,
+            let cmd= printf('!%s%s%s%s write %s %s %s',
+                \ (s:IsUAC ? 'wscript.exe ' : ''), s:dir, s:slash,
                 \ (s:IsUAC ? 'SudoEdit.vbs' : 'sudo.cmd'), file, s:writable_file,
                 \ (s:IsUAC ? '' : join(s:AuthTool, ' ')))
         else
