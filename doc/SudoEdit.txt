@@ -287,6 +287,10 @@ third line of this document.
 	    - change redirection when calling UAC vbs script (suggested by
 	      Boris Danilov, thanks!)
 	    - distribute the UAC VBScript together with the SudoEdit plugin
+	    - fix spelling mistakes (issue 
+	      https://github.com/chrisbra/SudoEdit.vim/pull/35, fixed by
+	      Tim Sæterøy, thanks!)
+	    - Check file modification time before asking for reloading buffers
 	0.20: Mar 27, 2014 "{{{1
 	    - skip writing undo, if the buffer hasn't been written.
 	    - document |g:sudo_tee| variable

@@ -91,9 +91,10 @@ fu! <sid>Init() "{{{2
     endif
     " Reset skip writing undo files
     let s:skip_wundo = 0
-"    endif
     " Stack of messages
     let s:msg = []
+    " Save last file modification times
+    let g:buf_changes = get(g:, 'buf_changes', {})
 endfu
 
 fu! <sid>Mkdir(dir) "{{{2
@@ -154,6 +155,10 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             endif
             let file = fnamemodify(file, ':p')
         endif
+        augroup SudoEditChanged
+            au!
+            au FileChangedShell <buffer> :call SudoEdit#FileChanged(expand("<afile>"))
+        augroup END
         return [o_srr, o_ar, o_tti, o_tte, o_shell, o_stmp, o_ssl, file]
     else
         " Make sure, persistent undo information is written
@@ -327,6 +332,9 @@ fu! <sid>SudoWrite(file) range "{{{2
         if empty(glob(a:file))
             let s:new_file = 1
         endif
+        " Record last modification time (this is used to prevent W11 warning
+        " later
+        let g:buf_changes[bufnr(fnamemodify(a:file, ':p'))] = localtime()
         call <sid>Exec(cmd)
     endif
     if v:shell_error
@@ -519,6 +527,15 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
         \ fnamemodify(file, ':p') != fnamemodify(expand("%"), ':p')
         exe ':sil f ' . file
         filetype detect
+    endif
+endfu
+fu! SudoEdit#FileChanged(file) "{{{2
+    let file=fnamemodify(expand("<afile>"), ':p')
+    if getftime(file) > get(g:buf_changes, bufnr(file), 0) + 2
+        " consider everything within the last 2 seconds as caused by this plugin
+        let v:fcs_choice='ask'
+    else
+        let v:fcs_choice='reload'
     endif
 endfu
 " Modeline {{{1
