@@ -20,11 +20,17 @@ fu! <sid>Init() "{{{2
 
 "    each time check, whether the authentication
 "    method changed (e.g. the User set a variable)
+    let s:slash='/'
     let s:sudoAuth=" sudo su "
     if <sid>Is("mac")
         let s:sudoAuth = "security ". s:sudoAuth
     elseif <sid>Is("win")
         let s:sudoAuth = "runas elevate ". s:sudoAuth
+        let s:slash=(&ssl ? '/' : '\')
+        if s:slash is# '\'
+            " because of the shellslash setting, need to adjust s:dir for it
+            let s:dir=substitute(s:dir, '/', '\\', 'g')
+        endif
     endif
     if exists("g:sudoAuth")
         let s:sudoAuth = g:sudoAuth .' '. s:sudoAuth
@@ -63,7 +69,7 @@ fu! <sid>Init() "{{{2
             " Write into public directory so everybody can access it
             " easily
             let s:writable_file = (empty($PUBLIC) ? $TEMP : $PUBLIC ).
-                        \ '\vim_temp_'.getpid().'.txt'
+                        \ s:slash. 'vim_temp_'.getpid().'.txt'
             let s:writable_file = shellescape(fnamemodify(s:writable_file, ':p:8'))
         endif
     else
@@ -79,7 +85,7 @@ fu! <sid>Init() "{{{2
         call <sid>Mkdir(s:error_dir)
         let s:error_file = s:error_dir. '/error'
         if <sid>Is("win")
-            let s:error_file = s:error_dir. '\error'
+            let s:error_file = s:error_dir. s:slash. 'error'
             let s:error_file = fnamemodify(s:error_file, ':p:8')
         endif
     endif
@@ -245,7 +251,7 @@ fu! <sid>SudoRead(file) "{{{2
     if <sid>Is("win")
         " Use Windows Shortnames (should makeing quoting easy)
         let file = shellescape(fnamemodify(a:file, ':p:8'))
-        let cmd  = printf('!%s\%s read %s %s %s', s:dir,
+        let cmd  = printf('!%s%s%s read %s %s %s', s:dir, s:slash,
                 \ (s:IsUAC ? 'SudoEdit.vbs' : 'sudo.cmd'),
                 \ file, s:writable_file, (s:IsUAC ? '' : join(s:AuthTool, ' ')))
     else
@@ -294,7 +300,7 @@ fu! <sid>SudoWrite(file) range "{{{2
         if <sid>Is("win")
             exe 'sil keepalt noa '. a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
             let file = shellescape(fnamemodify(a:file, ':p:8'))
-            let cmd= printf('!%s\%s write %s %s %s', s:dir,
+            let cmd= printf('!%s%s%s write %s %s %s', s:dir, s:slash,
                 \ (s:IsUAC ? 'SudoEdit.vbs' : 'sudo.cmd'), file, s:writable_file,
                 \ (s:IsUAC ? '' : join(s:AuthTool, ' ')))
         else
