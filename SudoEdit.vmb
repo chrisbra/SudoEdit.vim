@@ -2,7 +2,7 @@
 UseVimball
 finish
 autoload/SudoEdit.vim	[[[1
-515
+543
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
 " Version:  0.20
@@ -25,11 +25,17 @@ fu! <sid>Init() "{{{2
 
 "    each time check, whether the authentication
 "    method changed (e.g. the User set a variable)
+    let s:slash='/'
     let s:sudoAuth=" sudo su "
     if <sid>Is("mac")
         let s:sudoAuth = "security ". s:sudoAuth
     elseif <sid>Is("win")
         let s:sudoAuth = "runas elevate ". s:sudoAuth
+        let s:slash=(&ssl ? '/' : '\')
+        if s:slash is# '\'
+            " because of the shellslash setting, need to adjust s:dir for it
+            let s:dir=substitute(s:dir, '/', '\\', 'g')
+        endif
     endif
     if exists("g:sudoAuth")
         let s:sudoAuth = g:sudoAuth .' '. s:sudoAuth
@@ -68,7 +74,7 @@ fu! <sid>Init() "{{{2
             " Write into public directory so everybody can access it
             " easily
             let s:writable_file = (empty($PUBLIC) ? $TEMP : $PUBLIC ).
-                        \ '\vim_temp_'.getpid().'.txt'
+                        \ s:slash. 'vim_temp_'.getpid().'.txt'
             let s:writable_file = shellescape(fnamemodify(s:writable_file, ':p:8'))
         endif
     else
@@ -84,15 +90,16 @@ fu! <sid>Init() "{{{2
         call <sid>Mkdir(s:error_dir)
         let s:error_file = s:error_dir. '/error'
         if <sid>Is("win")
-            let s:error_file = s:error_dir. '\error'
+            let s:error_file = s:error_dir. s:slash. 'error'
             let s:error_file = fnamemodify(s:error_file, ':p:8')
         endif
     endif
     " Reset skip writing undo files
     let s:skip_wundo = 0
-"    endif
     " Stack of messages
     let s:msg = []
+    " Save last file modification times
+    let g:buf_changes = get(g:, 'buf_changes', {})
 endfu
 
 fu! <sid>Mkdir(dir) "{{{2
@@ -153,6 +160,10 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             endif
             let file = fnamemodify(file, ':p')
         endif
+        augroup SudoEditChanged
+            au!
+            au FileChangedShell <buffer> :call SudoEdit#FileChanged(expand("<afile>"))
+        augroup END
         return [o_srr, o_ar, o_tti, o_tte, o_shell, o_stmp, o_ssl, file]
     else
         " Make sure, persistent undo information is written
@@ -179,17 +190,6 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                     exe "e!" file
                 endif
                 call <sid>Exec("wundo! ". fnameescape(undofile))
-                if empty(glob(undofile)) &&
-                    \ &undodir =~ '^\.\($\|,\)'
-                    " Can't create undofile
-                    call add(s:msg, "Can't create undofile in current " .
-                    \ "directory, skipping writing undofiles!")
-                    throw "sudo:undofileError"
-                elseif empty(glob(undofile))
-                    " Writing undofile not possible
-                    call add(s:msg,  "Error occured, when writing undofile")
-                    return
-                endif
                 if <sid>Is("unix") && !empty(undofile) && s:error_exists == 0
                     let ufile = string(shellescape(undofile, 1))
                     let perm = system("stat -c '%u:%g' " .
@@ -204,6 +204,18 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                             \ " setting permissions of the undofile")
                     endif
                     call <sid>Exec(cmd)
+                endif
+                " Check if undofile is readable
+                if !filereadable(undofile) &&
+                    \ &undodir =~ '^\.\($\|,\)'
+                    " Can't create undofile
+                    call add(s:msg, "Can't create undofile in current " .
+                    \ "directory, skipping writing undofiles!")
+                    throw "sudo:undofileError"
+                elseif !filereadable(undofile)
+                    " Writing undofile not possible
+                    call add(s:msg,  "Error occured, when writing undofile")
+                    return
                 endif
                 endif
             endif
@@ -249,9 +261,10 @@ fu! <sid>SudoRead(file) "{{{2
     if <sid>Is("win")
         " Use Windows Shortnames (should makeing quoting easy)
         let file = shellescape(fnamemodify(a:file, ':p:8'))
-        let cmd  = printf('!%s\%s read %s %s %s', s:dir,
-                \ (s:IsUAC ? 'wscript.exe GetPrivileges.vbs' : 'sudo.cmd'),
-                \ file, s:writable_file, join(s:AuthTool, ' '))
+        let cmd  = printf('!%s%s%s%s read %s %s %s', 
+                \ (s:IsUAC ? 'start /B cmd /c "wscript.exe ':''), s:dir, s:slash,
+                \ (s:IsUAC ? 'SudoEdit.vbs' : 'sudo.cmd'),
+                \ file, s:writable_file, (s:IsUAC ? '"' : join(s:AuthTool, ' ')))
     else
         let cmd='cat ' . shellescape(a:file,1) . ' 2>'. shellescape(s:error_file)
         if  s:AuthTool[0] =~ '^su$'
@@ -298,9 +311,12 @@ fu! <sid>SudoWrite(file) range "{{{2
         if <sid>Is("win")
             exe 'sil keepalt noa '. a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
             let file = shellescape(fnamemodify(a:file, ':p:8'))
-            let cmd= printf('!%s\%s write %s %s %s', s:dir,
-                \ (s:IsUAC ? 'wscript.exe GetPrivileges.vbs' : 'sudo.cmd'), file, s:writable_file,
-                \ join(s:AuthTool, ' '))
+            " Do not try to understand the funny quotes...
+            " That looks unreadable currently...
+            let cmd= printf('!%s%s%s%s write %s %s %s',
+                \ (s:IsUAC ? 'start /B cmd /c "wscript.exe ' : ''), s:dir, s:slash,
+                \ (s:IsUAC ? 'SudoEdit.vbs' : 'sudo.cmd'), file, s:writable_file,
+                \ (s:IsUAC ? '"' : join(s:AuthTool, ' ')))
         else
             let cmd=printf('%s >/dev/null 2>%s %s', <sid>Path('tee'),
                 \ shellescape(s:error_file), shellescape(a:file,1))
@@ -321,7 +337,9 @@ fu! <sid>SudoWrite(file) range "{{{2
         if empty(glob(a:file))
             let s:new_file = 1
         endif
-        call <sid>SetBufName(a:file)
+        " Record last modification time (this is used to prevent W11 warning
+        " later
+        let g:buf_changes[bufnr(fnamemodify(a:file, ':p'))] = localtime()
         call <sid>Exec(cmd)
     endif
     if v:shell_error
@@ -438,7 +456,7 @@ fu! <sid>Exec(cmd) "{{{2
     endif
 endfu
 fu! <sid>SetBufName(file) "{{{2
-    if bufname('') !=# fnameescape(a:file)
+    if bufname('') !=# fnameescape(a:file) && !empty(fnameescape(a:file))
         " don't give the "ATTENTION" message when an existing swap file is
         " found.
         let sshm = &shortmess
@@ -455,7 +473,7 @@ fu! SudoEdit#Rmdir(dir) "{{{2
     endif
 endfu
 fu! SudoEdit#RmFile(file) "{{{2
-    call delete(fnameescape(a:file))
+    call delete(a:file)
 endfu
 fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     try
@@ -511,15 +529,25 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
     endif
     if s:use_sudo_protocol_handler ||
         \ empty(expand("%")) ||
-        \ file != expand("%")
+        \ fnamemodify(file, ':p') != fnamemodify(expand("%"), ':p')
         exe ':sil f ' . file
         filetype detect
+    endif
+endfu
+fu! SudoEdit#FileChanged(file) "{{{2
+    let file=fnamemodify(expand("<afile>"), ':p')
+    if getftime(file) > get(g:buf_changes, bufnr(file), 0) + 2
+        " consider everything within the last 2 seconds as caused by this plugin
+        " Avoids W11 warning
+        let v:fcs_choice='ask'
+    else
+        let v:fcs_choice='reload'
     endif
 endfu
 " Modeline {{{1
 " vim: set fdm=marker fdl=0 ts=4 sts=4 sw=4 et:  }}}
 doc/SudoEdit.txt	[[[1
-398
+402
 *SudoEdit.txt*  Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
@@ -574,7 +602,7 @@ The SudoEdit Plugin provides 2 Commands:
         :SudoRead[!] [file]
 
 SudoRead will read the given file name using any of the configured methods for
-superuser authtication. It basically does something like this: >
+superuser authentication. It basically does something like this: >
 
     :r !sudo cat file
 
@@ -583,7 +611,7 @@ If the current buffer does not contain any file, it will abort. If the !
 argument is used, the current buffer contents will be discarded, if it was
 modified.
 
-SudoRead provides file completion, so you can use <Tab> on the commandline to
+SudoRead provides file completion, so you can use <Tab> on the command line to
 specify the file to read.
 
 For compatibility with the old sudo.vim Plugin, SudoEdit.vim also supports
@@ -725,8 +753,8 @@ all cases. To make use of UAC set the g:sudoAuth variable to the string "uac":
     :let g:sudoAuth="uac"
 
 Technically, this works, by calling a VBScript, that will create a UAC dialog
-and on success write the files. This script is is called GetPrivileges.vbs and 
-is distributed with SudoEdit.vim plugin and lives within the autoload folder
+and on success write the files. This script is called GetPrivileges.vbs and is
+distributed with SudoEdit.vim plugin and lives within the autoload folder
 where the SudoEdit plugin resides.
 ==============================================================================
 4. SudoEdit Debugging                                       *SudoEdit-debug*
@@ -775,7 +803,7 @@ work, set the 'undodir' option to a directory, that is writable.
 5) Great work!
 
 Write me an email (look in the first line for my mail address). And if you are
-really happy, vote for the plugin and consider looking at my Amazon whishlist:
+really happy, vote for the plugin and consider looking at my Amazon wish list:
 http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
 6) Plugin Feedback                                        *SudoEdit-feedback*
@@ -809,6 +837,10 @@ third line of this document.
 	    - change redirection when calling UAC vbs script (suggested by
 	      Boris Danilov, thanks!)
 	    - distribute the UAC VBScript together with the SudoEdit plugin
+	    - fix spelling mistakes (issue 
+	      https://github.com/chrisbra/SudoEdit.vim/pull/35, fixed by
+	      Tim Sæterøy, thanks!)
+	    - Check file modification time before asking for reloading buffers
 	0.20: Mar 27, 2014 "{{{1
 	    - skip writing undo, if the buffer hasn't been written.
 	    - document |g:sudo_tee| variable
@@ -1042,7 +1074,7 @@ if '%mode%' == 'write' (
     %sudo% %params% " %COMSPEC% /c copy /Y %myfile% %newcontent% "
 )
 exit /B %ERRORLEVEL%
-autoload/GetPrivileges.vbs	[[[1
+autoload/SudoEdit.vbs	[[[1
 45
 ' Small vbs Script to generate an UAC dialog and request copying some privileged file
 ' Uses UAC to elevate rights, idea taken from:
@@ -1054,7 +1086,7 @@ Dim FSO, WshShell, UAC, cmd
 ' Safety check
 ' Vim might give more arguments, they will be just ignored
 if WScript.Arguments.Count < 3 then
-    WScript.Echo "Syntax: cscript.exe GetPrivileges.vbs [write|read] sourcefile targetfile"
+    WScript.Echo "Syntax: cscript.exe SudoEdit.vbs [write|read] sourcefile targetfile"
     Wscript.Quit 1
 end if
 
@@ -1074,17 +1106,17 @@ END if
 
 if (WScript.Arguments(0) = "write") then
     ' Write Files (delete source file afterwards, so we can easily check, if the copy worked
-    UAC.ShellExecute cmd, "/c copy /Y " & WScript.Arguments(1) & " " & WScript.Arguments(2) & " && del /Q " & WScript.Arguments(1), "", "runas", 1
+    UAC.ShellExecute cmd, "/c copy /Y " & WScript.Arguments(2) & " " & WScript.Arguments(1) & " && del /Q " & WScript.Arguments(2), "", "runas", 1
 else
     ' Read Files
-    UAC.ShellExecute cmd, "/c copy /Y " & WScript.Arguments(2) & " " & WScript.Arguments(1), "", "runas", 1
+    UAC.ShellExecute cmd, "/c copy /Y " & WScript.Arguments(1) & " " & WScript.Arguments(2), "", "runas", 1
 end if
 
 ' Sleep a moment, so that the FileExists check works correctly
 ' This only works for when writing the file,
 ' assume the read operation worked....
 WScript.Sleep 100
-If (FSO.FileExists(WScript.Arguments(1)) AND WScript.Arguments(0) = "write") Then
+If (FSO.FileExists(WScript.Arguments(2)) AND WScript.Arguments(0) = "write") Then
     WScript.Echo "Copy Failed"
     WScript.Quit 3
 end if
