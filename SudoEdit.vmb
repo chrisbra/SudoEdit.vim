@@ -5,12 +5,12 @@ autoload/SudoEdit.vim	[[[1
 543
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.20
+" Version:  0.21
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Thu, 27 Mar 2014 23:19:50 +0100
+" Last Change: Thu, 15 Jan 2015 20:57:15 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709
 " License: VIM License
-" GetLatestVimScripts: 2709 20 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 21 :AutoInstall: SudoEdit.vim
 
 " Functions: "{{{1
 
@@ -551,7 +551,7 @@ doc/SudoEdit.txt	[[[1
 *SudoEdit.txt*  Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.20 Thu, 27 Mar 2014 23:19:50 +0100
+Version: Vers 0.21 Thu, 15 Jan 2015 20:57:15 +0100
 Copyright: (c) 2009-2013 by Christian Brabandt               *SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -820,7 +820,7 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History                                         *SudoEdit-history*
-	0.21: (unreleased) "{{{1
+	0.21: Jan 15, 2015 "{{{1
 	    - temporarily set shelltemp (issue 
 	      https://github.com/chrisbra/SudoEdit.vim/issues/32, reported by
 	      Fernando da Silva, thanks!)
@@ -954,12 +954,12 @@ plugin/SudoEdit.vim	[[[1
 84
 " SudoEdit.vim - Use sudo/su for writing/reading files with Vim
 " ---------------------------------------------------------------
-" Version:  0.20
+" Version:  0.21
 " Authors:  Christian Brabandt <cb@256bit.org>
-" Last Change: Thu, 27 Mar 2014 23:19:50 +0100
+" Last Change: Thu, 15 Jan 2015 20:57:15 +0100
 " Script:  http://www.vim.org/scripts/script.php?script_id=2709 
 " License: VIM License
-" GetLatestVimScripts: 2709 20 :AutoInstall: SudoEdit.vim
+" GetLatestVimScripts: 2709 21 :AutoInstall: SudoEdit.vim
 " Documentation: see :h SudoEdit.txt
 
 " ---------------------------------------------------------------------

@@ -1,7 +1,7 @@
 *SudoEdit.txt*  Edit Files using Sudo/su
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: Vers 0.20 Thu, 27 Mar 2014 23:19:50 +0100
+Version: Vers 0.21 Thu, 15 Jan 2015 20:57:15 +0100
 Copyright: (c) 2009-2013 by Christian Brabandt               *SudoEdit-copyright*
            The VIM LICENSE applies to SudoEdit.vim and SudoEdit.txt
            (see |copyright|) except use SudoEdit instead of "Vim".
@@ -199,10 +199,13 @@ Alternatively, on recent Windows versions, you can use the builtin UAC system
 and have a batch script automatically elevated, which will do the writing and
 reading of the file. This method is rather experimental and might not work in
 all cases. To make use of UAC set the g:sudoAuth variable to the string "uac":
->
 
     :let g:sudoAuth="uac"
 
+Technically, this works, by calling a VBScript, that will create a UAC dialog
+and on success write the files. This script is called GetPrivileges.vbs and is
+distributed with SudoEdit.vim plugin and lives within the autoload folder
+where the SudoEdit plugin resides.
 ==============================================================================
 4. SudoEdit Debugging                                       *SudoEdit-debug*
 
@@ -267,6 +270,27 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History                                         *SudoEdit-history*
+	0.21: Jan 15, 2015 "{{{1
+	    - temporarily set shelltemp (issue 
+	      https://github.com/chrisbra/SudoEdit.vim/issues/32, reported by
+	      Fernando da Silva, thanks!)
+	    - Do not trigger autocommands when writing temp files
+	    - Make UAC actually work for Windows
+	    - many small improvements for Windows
+	    - do not call expand() for $SHELL variables (issue 
+	      https://github.com/chrisbra/SudoEdit.vim/pull/34, fixed by
+	      Daniel Hahler, thanks!)
+	    - remove writable file always (and make sure it will be different
+	      in case of the Vim running twice).
+	    - Reset 'shellslash' on windows (suggested by Boris Danilov,
+	      thanks!)
+	    - change redirection when calling UAC vbs script (suggested by
+	      Boris Danilov, thanks!)
+	    - distribute the UAC VBScript together with the SudoEdit plugin
+	    - fix spelling mistakes (issue 
+	      https://github.com/chrisbra/SudoEdit.vim/pull/35, fixed by
+	      Tim Sæterøy, thanks!)
+	    - Check file modification time before asking for reloading buffers
 	0.20: Mar 27, 2014 "{{{1
 	    - skip writing undo, if the buffer hasn't been written.
 	    - document |g:sudo_tee| variable
