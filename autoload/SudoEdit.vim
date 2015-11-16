@@ -171,49 +171,49 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                 return
             endif
             if has("persistent_undo")
-            let undofile = undofile(file)
-            if !empty(file) &&
-                \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
-                \ &l:udf
-                if !a:readflag
-                " Force reading in the buffer to avoid stupid W13 warning
-                " don't do this in GUI mode, so one does not have to enter
-                " the password again (Leave the W13 warning)
-                if !has("gui_running") && exists("s:new_file") && s:new_file
-                    "sil call <sid>SudoRead(file)
-                    " Be careful, :e! within a BufWriteCmd can crash Vim!
-                    exe "e!" file
-                endif
-                call <sid>Exec("wundo! ". fnameescape(undofile))
-                if <sid>Is("unix") && !empty(undofile)
-                    let ufile = string(shellescape(undofile, 1))
-                    let perm = system("stat -c '%u:%g' " .
-                        \ shellescape(file, 1))[:-2]
-                    " Make sure, undo file is readable for current user
-                    let cmd  = printf("!%s sh -c 'test -f %s && ".
-                        \ "chown %s -- %s && ",
-                        \ join(s:AuthTool, ' '), ufile, perm, ufile)
-                    let cmd .= printf("chmod a+r -- %s 2>%s'", ufile, shellescape(s:error_file))
-                    if has("gui_running")
-                        call <sid>echoWarn("Enter password again for".
-                            \ " setting permissions of the undofile")
+                let undofile = undofile(file)
+                if !empty(file) &&
+                    \!<sid>CheckNetrwFile(@%) && !empty(undofile) &&
+                    \ &l:udf
+                    if !a:readflag
+                        " Force reading in the buffer to avoid stupid W13 warning
+                        " don't do this in GUI mode, so one does not have to enter
+                        " the password again (Leave the W13 warning)
+                        if !has("gui_running") && exists("s:new_file") && s:new_file
+                            "sil call <sid>SudoRead(file)
+                            " Be careful, :e! within a BufWriteCmd can crash Vim!
+                            exe "e!" file
+                        endif
+                        call <sid>Exec("wundo! ". fnameescape(undofile))
+                        if <sid>Is("unix") && !empty(undofile)
+                            let ufile = string(shellescape(undofile, 1))
+                            let perm = system("stat -c '%u:%g' " .
+                                \ shellescape(file, 1))[:-2]
+                            " Make sure, undo file is readable for current user
+                            let cmd  = printf("!%s sh -c 'test -f %s && ".
+                                \ "chown %s -- %s && ",
+                                \ join(s:AuthTool, ' '), ufile, perm, ufile)
+                            let cmd .= printf("chmod a+r -- %s 2>%s'", ufile, shellescape(s:error_file))
+                            if has("gui_running")
+                                call <sid>echoWarn("Enter password again for".
+                                    \ " setting permissions of the undofile")
+                            endif
+                            call <sid>Exec(cmd)
+                        endif
+                        " Check if undofile is readable
+                        if !filereadable(undofile) &&
+                            \ &undodir =~ '^\.\($\|,\)'
+                            " Can't create undofile
+                            call add(s:msg, "Can't create undofile in current " .
+                            \ "directory, skipping writing undofiles!")
+                            throw "sudo:undofileError"
+                        elseif !filereadable(undofile)
+                            " Writing undofile not possible
+                            call add(s:msg,  "Error occured, when writing undofile")
+                            return
+                        endif
                     endif
-                    call <sid>Exec(cmd)
                 endif
-                " Check if undofile is readable
-                if !filereadable(undofile) &&
-                    \ &undodir =~ '^\.\($\|,\)'
-                    " Can't create undofile
-                    call add(s:msg, "Can't create undofile in current " .
-                    \ "directory, skipping writing undofiles!")
-                    throw "sudo:undofileError"
-                elseif !filereadable(undofile)
-                    " Writing undofile not possible
-                    call add(s:msg,  "Error occured, when writing undofile")
-                    return
-                endif
-                endif
-            endif
             endif " has("persistent_undo")
         catch
             " no-op
