@@ -141,6 +141,9 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             " are used when creating the vbs and cmd file.
             set nossl
         endif
+        " reset undoreload
+        let o_ur = &ur
+        setl ur=0
         call <sid>Init()
         if empty(a:file)
             let file = expand("%")
@@ -159,7 +162,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             au!
             au FileChangedShell <buffer> :call SudoEdit#FileChanged(expand("<afile>"))
         augroup END
-        return [o_srr, o_ar, o_tti, o_tte, o_shell, o_stmp, o_ssl, file]
+        return [o_srr, o_ar, o_tti, o_tte, o_shell, o_stmp, o_ssl, o_ur, file]
     else
         " Make sure, persistent undo information is written
         " but only for valid files and not empty ones
@@ -219,9 +222,13 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             " no-op
         finally
             " Make sure W11 warning is triggered and consumed by 'ar' setting
-            checktime
+            "checktime
+            "let _ur=&ur
+            "setl ur=0
+            exe "undojoin | :e" file
+            "let &ur=_ur
             " Reset old settings
-            let [ &srr, &l:ar, &t_ti, &t_te, &shell, &stmp, &ssl ] = values
+            let [ &srr, &l:ar, &t_ti, &t_te, &shell, &stmp, &ssl, &ur ] = values
         endtry
     endif
 endfu
@@ -319,6 +326,7 @@ fu! <sid>SudoWrite(file) range "{{{2
                 \ join(s:AuthTool, ' ') . cmd
         endif
     endif
+    let cmd=':undojoin |'.cmd
     if <sid>CheckNetrwFile(a:file) && exists(":NetUserPass") == 2
         let protocol = matchstr(a:file, '^[^:]:')
         call <sid>echoWarn('Using Netrw for writing')
