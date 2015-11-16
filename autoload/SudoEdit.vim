@@ -344,6 +344,10 @@ fu! <sid>SudoWrite(file) range "{{{2
         " later
         let g:buf_changes[bufnr(fnamemodify(a:file, ':p'))] = localtime()
         call <sid>Exec(cmd)
+        augroup SudoEditWrite
+            au! BufWriteCmd <buffer>
+            au BufWriteCmd <buffer> :SudoWrite
+        augroup END
     endif
     if v:shell_error
         throw "sudo:writeError"
