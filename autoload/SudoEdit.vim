@@ -185,7 +185,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                     exe "e!" file
                 endif
                 call <sid>Exec("wundo! ". fnameescape(undofile))
-                if <sid>Is("unix") && !empty(undofile) && s:error_exists == 0
+                if <sid>Is("unix") && !empty(undofile)
                     let ufile = string(shellescape(undofile, 1))
                     let perm = system("stat -c '%u:%g' " .
                         \ shellescape(file, 1))[:-2]
