@@ -225,7 +225,10 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             "checktime
             "let _ur=&ur
             "setl ur=0
-            exe "undojoin | :e" file
+
+            " Call undojoin, but catch 'undojoin is not allowed after undo'.
+            try | undojoin | catch /^Vim\%((\a\+)\)\=:E790/ | endtry
+            exe "edit" file
             "let &ur=_ur
             " Reset old settings
             let [ &srr, &l:ar, &t_ti, &t_te, &shell, &stmp, &ssl, &ur ] = values
@@ -326,7 +329,8 @@ fu! <sid>SudoWrite(file) range "{{{2
                 \ join(s:AuthTool, ' ') . cmd
         endif
     endif
-    let cmd=':undojoin |'.cmd
+    " Call undojoin, but catch 'undojoin is not allowed after undo'.
+    let cmd='try | undojoin | catch /^Vim\%((\a\+)\)\=:E790/ | endtry | '.cmd
     if <sid>CheckNetrwFile(a:file) && exists(":NetUserPass") == 2
         let protocol = matchstr(a:file, '^[^:]:')
         call <sid>echoWarn('Using Netrw for writing')
