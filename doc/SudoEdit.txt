@@ -88,6 +88,9 @@ be written, if it was modified.
 
 Again, you can use the protocol handler sudo: for writing.
 
+After the first time :SudoWrite has been used, it will be automatically be
+invoked when using |:w|.
+
 ==============================================================================
 3. SudoEdit Configuration                               *SudoEdit-config*
 
@@ -270,6 +273,14 @@ third line of this document.
 
 ==============================================================================
 6. SudoEdit History                                         *SudoEdit-history*
+        0.22: unreleased "{{{1
+            - Use |:undojoin| to keep undo-stack intact
+	      (https://github.com/chrisbra/SudoEdit.vim/issues/37, reported by
+              Daniel Hahler, thanks!)
+            - Remember to use |:SudoWrite| for |:w| after the first time a
+              buffer has been written with |:SudoWrite|
+              (https://github.com/chrisbra/SudoEdit.vim/issues/36, reported by
+              Daniel Hahler, thanks!)
 	0.21: Jan 15, 2015 "{{{1
 	    - temporarily set shelltemp (issue 
 	      https://github.com/chrisbra/SudoEdit.vim/issues/32, reported by
