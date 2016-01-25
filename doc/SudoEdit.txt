@@ -281,6 +281,9 @@ third line of this document.
               buffer has been written with |:SudoWrite|
               (https://github.com/chrisbra/SudoEdit.vim/issues/36, reported by
               Daniel Hahler, thanks!)
+            - Resolve symlinks properly
+              (https://github.com/chrisbra/SudoEdit.vim/issues/40, reported by
+              Daniel Hahler, thanks!)
 	0.21: Jan 15, 2015 "{{{1
 	    - temporarily set shelltemp (issue 
 	      https://github.com/chrisbra/SudoEdit.vim/issues/32, reported by

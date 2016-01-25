@@ -307,15 +307,16 @@ fu! <sid>SudoWrite(file) range "{{{2
         " prevent E139 error
         exe "bw!" s:writable_file
     endif
+    let file=resolve(a:file)
     if  s:AuthTool[0] == 'su'
         " Workaround since su cannot be run with :w !
         exe "sil keepalt noa ". a:firstline . ',' . a:lastline . 'w! ' . s:writable_file
         let cmd=':!' . join(s:AuthTool, ' ') . '"mv ' . s:writable_file . ' ' .
-            \ shellescape(a:file,1) . '" -- 2>' . shellescape(s:error_file)
+            \ shellescape(file,1) . '" -- 2>' . shellescape(s:error_file)
     else
         if <sid>Is("win")
             exe 'sil keepalt noa '. a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
-            let file = shellescape(fnamemodify(a:file, ':p:8'))
+            let file = shellescape(fnamemodify(file, ':p:8'))
             " Do not try to understand the funny quotes...
             " That looks unreadable currently...
             let cmd= printf('!%s%s%s%s write %s %s %s',
@@ -324,15 +325,15 @@ fu! <sid>SudoWrite(file) range "{{{2
                 \ (s:IsUAC ? '"' : join(s:AuthTool, ' ')))
         else
             let cmd=printf('%s >/dev/null 2>%s %s', <sid>Path('tee'),
-                \ shellescape(s:error_file), shellescape(a:file,1))
+                \ shellescape(s:error_file), shellescape(file,1))
             let cmd=a:firstline . ',' . a:lastline . 'w !' .
                 \ join(s:AuthTool, ' ') . cmd
         endif
     endif
     " Call undojoin, but catch 'undojoin is not allowed after undo'.
     let cmd='try | undojoin | catch /^Vim\%((\a\+)\)\=:E790/ | endtry | '.cmd
-    if <sid>CheckNetrwFile(a:file) && exists(":NetUserPass") == 2
-        let protocol = matchstr(a:file, '^[^:]:')
+    if <sid>CheckNetrwFile(file) && exists(":NetUserPass") == 2
+        let protocol = matchstr(file, '^[^:]:')
         call <sid>echoWarn('Using Netrw for writing')
         let uid = input(protocol . ' username: ')
         let passwd = inputsecret('password: ')
@@ -341,12 +342,12 @@ fu! <sid>SudoWrite(file) range "{{{2
         w
     else
         let s:new_file = 0
-        if empty(glob(a:file))
+        if empty(glob(file))
             let s:new_file = 1
         endif
         " Record last modification time (this is used to prevent W11 warning
         " later
-        let g:buf_changes[bufnr(fnamemodify(a:file, ':p'))] = localtime()
+        let g:buf_changes[bufnr(fnamemodify(file, ':p'))] = localtime()
         call <sid>Exec(cmd)
         augroup SudoEditWrite
             au! BufWriteCmd <buffer>
