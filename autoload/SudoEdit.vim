@@ -299,7 +299,7 @@ fu! <sid>SudoRead(file) "{{{2
         endif
     endif
     filetype detect
-    set nomod
+    set nomodified
 endfu
 
 fu! <sid>SudoWrite(file) range "{{{2
@@ -359,7 +359,7 @@ fu! <sid>SudoWrite(file) range "{{{2
     endif
     " Write successful
     if &mod
-        setl nomod
+        setl nomodified
     endif
 endfu
 
