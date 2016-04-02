@@ -151,6 +151,11 @@ differently, specify this option like this: >
 
     :let g:sudo_tee='/usr/bin/tee'
 
+<							*SudoEdit_skip_wundo*
+
+If the variable g:SudoEdit_skip_wundo is set, this plugin will skip writing
+undo files (which may result in asking for the admin password twice).
+
 ==============================================================================
 3.1 SudoEdit on Windows                                          *SudoEdit-Win*
 
@@ -284,6 +289,14 @@ third line of this document.
             - Resolve symlinks properly
               (https://github.com/chrisbra/SudoEdit.vim/issues/40, reported by
               Daniel Hahler, thanks!)
+	    - Take arguments into account, when aliasing |:w| to |:SudoWrite|
+	      command 
+              (https://github.com/chrisbra/SudoEdit.vim/issues/43, reported by
+              Daniel Hahler, thanks!)
+	    - Skip writing undo files, if g:SudoEdit_skip_wundo variable is
+	      set.
+              (https://github.com/chrisbra/SudoEdit.vim/issues/41, reported by
+              mMontu, thanks!)
 	0.21: Jan 15, 2015 "{{{1
 	    - temporarily set shelltemp (issue 
 	      https://github.com/chrisbra/SudoEdit.vim/issues/32, reported by
