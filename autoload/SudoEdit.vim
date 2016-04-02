@@ -351,7 +351,7 @@ fu! <sid>SudoWrite(file) range "{{{2
         call <sid>Exec(cmd)
         augroup SudoEditWrite
             au! BufWriteCmd <buffer>
-            au BufWriteCmd <buffer> :SudoWrite
+            au BufWriteCmd <buffer> :exe ":SudoWrite ". expand("<afile>")
         augroup END
     endif
     if v:shell_error
