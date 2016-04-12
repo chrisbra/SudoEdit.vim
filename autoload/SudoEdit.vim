@@ -362,7 +362,7 @@ fu! <sid>SudoWrite(file) range "{{{2
         setl nomodified
     endif
     if get(g:, 'SudoEdit_skip_wundo', 1)
-        let s:skip_undo = 1
+        let s:skip_wundo = 1
     endif
 endfu
 
