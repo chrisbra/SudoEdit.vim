@@ -250,13 +250,25 @@ directories, therefore, when your 'undodir' setting contains '.' (the
 default), the plugin won't simply write the undofile. If you want undofiles to
 work, set the 'undodir' option to a directory, that is writable.
 
-5) Great work!
+5) Plugin doesn't work in neovim, how to make it to work?
+
+Yeah, it is a known problem that neovim broke compatibility here. Since I am not using Neovim, I am not able to fix it.
+
+Alternatively you can set the the ask pass to be GUI which should work.
+Remember to install the 'gnome-ssh-askpass':
+
+      :let g:sudo_askpass='/usr/lib/openssh/gnome-ssh-askpass'
+
+Alternatively you can use the following "fork-ish" plugin that supports neovim
+https://github.com/lambdalisue/suda.vim
+
+6) Great work!
 
 Write me an email (look in the first line for my mail address). And if you are
 really happy, vote for the plugin and consider looking at my Amazon wish list:
 http://www.amazon.de/wishlist/2BKAHE8J7Z6UW
 
-6) Plugin Feedback                                        *SudoEdit-feedback*
+7) Plugin Feedback                                        *SudoEdit-feedback*
 
 Feedback is always welcome. If you like the plugin, please rate it at the
 vim-page:
@@ -271,13 +283,13 @@ third line of this document.
 ==============================================================================
 6. SudoEdit History                                         *SudoEdit-history*
 	0.21: Jan 15, 2015 "{{{1
-	    - temporarily set shelltemp (issue 
+	    - temporarily set shelltemp (issue
 	      https://github.com/chrisbra/SudoEdit.vim/issues/32, reported by
 	      Fernando da Silva, thanks!)
 	    - Do not trigger autocommands when writing temp files
 	    - Make UAC actually work for Windows
 	    - many small improvements for Windows
-	    - do not call expand() for $SHELL variables (issue 
+	    - do not call expand() for $SHELL variables (issue
 	      https://github.com/chrisbra/SudoEdit.vim/pull/34, fixed by
 	      Daniel Hahler, thanks!)
 	    - remove writable file always (and make sure it will be different
@@ -287,7 +299,7 @@ third line of this document.
 	    - change redirection when calling UAC vbs script (suggested by
 	      Boris Danilov, thanks!)
 	    - distribute the UAC VBScript together with the SudoEdit plugin
-	    - fix spelling mistakes (issue 
+	    - fix spelling mistakes (issue
 	      https://github.com/chrisbra/SudoEdit.vim/pull/35, fixed by
 	      Tim Sæterøy, thanks!)
 	    - Check file modification time before asking for reloading buffers
