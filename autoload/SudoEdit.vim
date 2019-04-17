@@ -539,6 +539,9 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
         call <sid>LocalSettings(_settings, a:readflag, '')
         call <sid>Mes(s:msg)
     endtry
+    if !a:readflag
+        exe "doautocmd <nomodeline> BufWritePost" fnamemodify(file, ':p')
+    endif
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
         let file = 'sudo:' . fnamemodify(file, ':p')
     endif
