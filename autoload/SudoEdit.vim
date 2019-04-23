@@ -228,7 +228,12 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
 
             " Call undojoin, but catch 'undojoin is not allowed after undo'.
             try | undojoin | catch /^Vim\%((\a\+)\)\=:E790/ | endtry
-            exe "edit" fnameescape(file)
+            let [old_modelines, &modelines] = [&modelines, 0]
+            try
+                exe 'edit' fnameescape(file)
+            finally
+                let &modelines = old_modelines
+            endtry
             "let &ur=_ur
             " Reset old settings
             let [ &srr, &l:ar, &t_ti, &t_te, &shell, &stmp, &ssl, &ur ] = values
