@@ -212,7 +212,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
                             throw "sudo:undofileError"
                         elseif !filereadable(undofile)
                             " Writing undofile not possible
-                            call add(s:msg,  "Error occured, when writing undofile")
+                            call add(s:msg, printf('Undofile is not readable, not writing: %s', undofile))
                             return
                         endif
                     endif
