@@ -540,7 +540,8 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
         call <sid>Mes(s:msg)
     endtry
     if !a:readflag
-        exe "doautocmd <nomodeline> BufWritePost" fnamemodify(file, ':p')
+        " Use 'silent' because 'exists()' cannot be used here with patterns.
+        exe ':sil doautocmd <nomodeline> BufWritePost' fnamemodify(file, ':p')
     endif
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
         let file = 'sudo:' . fnamemodify(file, ':p')
