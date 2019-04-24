@@ -119,6 +119,9 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
         " Set shellrediraction temporarily
         " This is used to get su working right!
         let o_srr = &srr
+        " disable reloading the modeline after :e
+        let o_mls = &mls
+        let &mls  = 0
         " avoid W11 warning
         let o_ar  = &l:ar
         let &srr = '>'
@@ -162,7 +165,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             au!
             au FileChangedShell <buffer> :call SudoEdit#FileChanged(expand("<afile>"))
         augroup END
-        return [o_srr, o_ar, o_tti, o_tte, o_shell, o_stmp, o_ssl, o_ur, file]
+        return [o_srr, o_ar, o_tti, o_tte, o_shell, o_stmp, o_ssl, o_ur, o_mls, file]
     else
         " Make sure, persistent undo information is written
         " but only for valid files and not empty ones
@@ -231,7 +234,7 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
             exe "edit" fnameescape(file)
             "let &ur=_ur
             " Reset old settings
-            let [ &srr, &l:ar, &t_ti, &t_te, &shell, &stmp, &ssl, &ur ] = values
+            let [ &srr, &l:ar, &t_ti, &t_te, &shell, &stmp, &ssl, &ur, &mls ] = values
         endtry
     endif
 endfu
