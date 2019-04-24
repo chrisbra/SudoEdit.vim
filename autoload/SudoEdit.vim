@@ -543,7 +543,8 @@ fu! SudoEdit#SudoDo(readflag, force, file) range "{{{2
         call <sid>Mes(s:msg)
     endtry
     if !a:readflag
-        " Use 'silent' because 'exists()' cannot be used here with patterns.
+        " Use 'silent' to skip "No matching autocommand" warning message that
+        " will be output if not BufWritePost autocommand exists.
         exe ':sil doautocmd <nomodeline> BufWritePost' fnamemodify(file, ':p')
     endif
     if file !~ 'sudo:' && s:use_sudo_protocol_handler
