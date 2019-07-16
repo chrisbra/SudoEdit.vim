@@ -231,7 +231,11 @@ fu! <sid>LocalSettings(values, readflag, file) "{{{2
 
             " Call undojoin, but catch 'undojoin is not allowed after undo'.
             try | undojoin | catch /^Vim\%((\a\+)\)\=:E790/ | endtry
+            let orig_readonly = &readonly
             exe "edit" fnameescape(file)
+            if &readonly != orig_readonly
+                let &readonly = orig_readonly
+            endif
             "let &ur=_ur
             " Reset old settings
             let [ &srr, &l:ar, &t_ti, &t_te, &shell, &stmp, &ssl, &ur, &mls ] = values
