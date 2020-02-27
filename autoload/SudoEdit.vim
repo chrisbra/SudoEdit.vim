@@ -88,6 +88,9 @@ fu! <sid>Init() "{{{2
             let s:error_file = s:error_dir. s:slash. 'error'
             let s:error_file = fnamemodify(s:error_file, ':p:8')
         endif
+        " Create the empty error file already, to ensure it is owned by the
+        " current user.
+        call writefile([], s:error_file)
     endif
     " Reset skip writing undo files
     let s:skip_wundo = 0
