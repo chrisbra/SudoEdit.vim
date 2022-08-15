@@ -70,7 +70,7 @@ fu! <sid>Init() "{{{2
             " easily
             let s:writable_file = (empty($PUBLIC) ? $TEMP : $PUBLIC ).
                         \ s:slash. 'vim_temp_'.getpid().'.txt'
-            let s:writable_file = shellescape(fnamemodify(s:writable_file, ':p:8'))
+                        let s:writable_file = shellescape(s:writable_file)
         endif
     else
         if !exists("s:writable_file")
@@ -86,7 +86,7 @@ fu! <sid>Init() "{{{2
         let s:error_file = s:error_dir. '/error'
         if <sid>Is("win")
             let s:error_file = s:error_dir. s:slash. 'error'
-            let s:error_file = fnamemodify(s:error_file, ':p:8')
+            " let s:error_file = fnamemodify(s:error_file, ':p:8')
         endif
         " Create the empty error file already, to ensure it is owned by the
         " current user.
@@ -275,7 +275,7 @@ fu! <sid>SudoRead(file) "{{{2
     sil %d _
     if <sid>Is("win")
         " Use Windows Shortnames (should makeing quoting easy)
-        let file = shellescape(fnamemodify(a:file, ':p:8'))
+        let file = shellescape(a:file)
         let cmd  = printf('!%s%s%s%s read %s %s %s', 
                 \ (s:IsUAC ? 'start /B cmd /c "wscript.exe ':''), s:dir, s:slash,
                 \ (s:IsUAC ? 'SudoEdit.vbs' : 'sudo.cmd'),
@@ -326,7 +326,7 @@ fu! <sid>SudoWrite(file) range "{{{2
     else
         if <sid>Is("win")
             exe 'sil keepalt noa '. a:firstline . ',' . a:lastline . 'w! ' . s:writable_file[1:-2]
-            let file = shellescape(fnamemodify(file, ':p:8'))
+            let file = shellescape(file)
             " Do not try to understand the funny quotes...
             " That looks unreadable currently...
             let cmd= printf('!%s%s%s%s write %s %s %s',

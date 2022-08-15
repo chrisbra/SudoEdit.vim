@@ -11,7 +11,7 @@ shift
 shift
 shift
 
-:: Use runas or something alike to elevate priviliges, but
+:: Use runas or something alike to elevate privileges, but
 :: first parse parameter for runas
 :: Windows cmd.exe is very clumsy to use ;(
 set params=%1
@@ -29,8 +29,10 @@ echo ***************************************
 echo Calling %sudo% for Privilege Escalation
 echo ***************************************
 if '%mode%' == 'write' (
-    %sudo% %params% " %COMSPEC% /c copy /Y %newcontent% %myfile% "
+    :: echo %sudo% %params% "%COMSPEC% /c copy /Y \"%newcontent:"=%\" \"%myfile:"=%\""
+    %sudo% %params% "%COMSPEC% /c copy /Y \"%newcontent:"\"=% \"%myfile:"=%\""
 ) else (
-    %sudo% %params% " %COMSPEC% /c copy /Y %myfile% %newcontent% "
+    :: echo %sudo% %params% "%COMSPEC% /c copy /Y \"%myfile:"="%\" \"%newcontent:"="%\""
+    %sudo% %params% "%COMSPEC% /c copy /Y \"%myfile:"="%\" \"%newcontent:"="%\""
 )
 exit /B %ERRORLEVEL%
