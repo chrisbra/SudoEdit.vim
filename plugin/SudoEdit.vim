@@ -72,6 +72,7 @@ augroup Sudo
 	autocmd!
 	au BufReadCmd,FileReadCmd sudo:/*,sudo:* SudoRead <afile>
 	au BufWriteCmd,FileWriteCmd sudo:/*,sudo:* SudoWrite <afile>
+	au FileChangedRO * set noreadonly | execute "autocmd BufWriteCmd <buffer> SudoWrite"
 augroup END
 "}}}
 
